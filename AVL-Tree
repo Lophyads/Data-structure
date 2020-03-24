@@ -1,0 +1,150 @@
+namespace AVL_tree {
+	class AVLtree {
+	private:
+		struct avltree {
+			int height;
+			int val;
+			avltree* left;
+			avltree* right;
+			avltree(int x) :val(x), height(1), left(nullptr), right(nullptr) {}
+		};
+		avltree* head = nullptr;
+	public:
+		AVLtree() :head(nullptr){};
+		avltree* gethead() {
+			return head;
+		}
+		avltree* _new(int x) {
+			return new avltree(x);
+		}
+		void insert(int num, avltree*& root) {
+			if (!root)
+				root = new avltree(num);
+			else if (num < root->val) {
+				insert(num, root->left);
+				if (height(root->left) - height(root->right) > 1) {
+					if (num > root->left->val)
+						_LRrotate(root);
+					else
+						_LLrotate(root);//单旋转
+				}
+			}
+			else if (num > root->val) {
+				insert(num, root->right);
+				if (height(root->right) - height(root->left) > 1) {
+					if (num < root->right->val)
+						_RLrotate(root);//双旋转
+					else
+						_RRrotate(root);//单旋转
+				}
+			}
+			else;
+			root->height = max(height(root->left), height(root->right)) + 1;
+		}
+
+
+		void erase(int num, avltree*& root) {
+			if (!root) return;
+			 if (num < root->val) {
+				erase(num, root->left);
+				if (height(root->right) - height(root->left) > 1) {
+					if (height(root->right->left)>height(root->right->right))
+						_RLrotate(root);//双旋转
+					else
+						_RRrotate(root);//单旋转
+				}
+			}
+			else if (num > root->val) {
+				erase(num, root->right);
+				if (height(root->left) - height(root->right) > 1) {
+					if (height(root->left->right)>height(root->left->left))
+						_LRrotate(root);
+					else
+						_LLrotate(root);//单旋转
+				}
+			}
+			else {
+				 if (!root->left && !root->right) {
+					 root = nullptr;
+					 return;
+				 }
+				 else {
+					 root->val = findmin(root->right)->val;
+					 erase(root->val, root->right);
+				 }
+			 }
+			root->height = max(height(root->left), height(root->right));
+		}
+
+		void print(int x,avltree* &root) const{
+			if (!root) 
+				cout << "Not Found!" << endl;
+			else if (x < root->val)
+				print(x, root->left);
+			else if (x > root->val)
+				print(x, root->right);
+			else
+				cout << "found!" <<"val="<<root->val<<"height="<< root->height<<endl;
+		}
+	private:
+
+		int height(avltree* root) {
+			return root == nullptr ? 0 : root->height;
+		}
+
+
+		void _LLrotate(avltree*& root) {
+			avltree* tmp = root->left;
+			root->left = tmp->right;
+			tmp->right = root;
+			root->height = max(height(root->left), height(root->right)) + 1;
+			tmp->height = max(height(root->left), root->height) + 1;
+			root = tmp;
+		}
+
+		void _RRrotate(avltree*& root) {
+			avltree* tmp = root->right;
+			root->right = tmp->left;
+			tmp->left = root;
+			root->height = max(height(root->left), height(root->right)) + 1;
+			tmp->height = max(height(root->right), root->height) + 1;
+			root = tmp;
+		}
+
+		void _LRrotate(avltree*& root) {
+			_RRrotate(root->left);
+			_LLrotate(root);
+		}
+
+		void _RLrotate(avltree*& root) {
+			_LLrotate(root->right);
+			_RRrotate(root);
+		}
+
+		avltree* findmin(avltree* root) const {
+			if (root->left == nullptr)
+				return root;
+			if (!root) return nullptr;
+			return findmin(root->left);
+		}//找到最小结点
+
+		void remove(int num,avltree* &root) {
+			if (!root) return;
+			if (num < root->val)
+				 remove(num,root->left);
+			if (num > root->val)
+				remove(num,root->right);
+			else {
+				if (root->left && root->right) {
+					root->val = findmin(root->right)->val;//找到右子树的最小结点
+					remove(root->val, root->right);
+				}
+				else {
+					avltree* oldnode = root;
+					root = root->left == nullptr ? root->left : root->right;
+					delete oldnode;
+				}
+			}
+		}
+	};
+}

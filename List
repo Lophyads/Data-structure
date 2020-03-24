@@ -1,0 +1,176 @@
+#include<iostream>
+using namespace std;
+namespace _list {
+template<typename T>
+struct Node {
+	T val = T();
+	Node* pre = nullptr;
+	Node* next = nullptr;
+	Node() {}//自提供默认构造函数
+	Node(T x, Node* p, Node* n) :val(x), pre(p), next(n) {}
+};
+template<typename T>
+class const_Myiterator {
+protected:
+	typedef Node<T> list_node;
+	typedef list_node* Link_type;
+	Link_type cur;
+private:
+	typedef const_Myiterator self;
+public:
+	const_Myiterator():cur(nullptr){}
+	const_Myiterator(Link_type x) :cur(x) {}
+	//~const_Myiterator() {}
+	T& operator* () const{
+		return (*cur).val;
+	}
+	/*T* operatoe-> ()const {
+		return &(operator*());
+	}*/
+	self& operator ++() {
+		cur = (Link_type)((*cur).next);
+		return *this;
+	}//前++
+	self& operator++(int) {
+		self tmp = *this;
+		++* this;
+		return tmp;
+	}//后++
+	bool operator==(self& x) const{
+		return cur==x.cur;
+	}
+	bool operator!=(self& x)const {
+		return cur != x.cur;
+	}
+};
+template<typename T>
+	class Myiterator :public const_Myiterator<T> {
+	private:
+		typedef Myiterator<T> self;
+	protected:
+		typedef Node<T> list_node;
+		typedef list_node* Link_type;
+	public:
+		Link_type cur;
+		Myiterator() :cur(nullptr) {}
+		Myiterator(Link_type x) :cur(x) {}
+		//~Myiterator() {}
+		T& operator* () {
+			return (*cur).val;
+		}
+		self& operator ++() {
+			cur = (Link_type)(*cur).next;
+			return *this;
+		}
+		self& operator++(int) {
+			self old = *this;
+			++* this;
+			return old;
+		}
+		bool operator==(self& x) const {
+			return cur == x.cur;
+		}
+		bool operator!=(self& x)const {
+			return cur != x.cur;
+		}
+	};
+template<typename T>
+class MyList{
+protected:
+	typedef Node<T> list_node;
+	typedef const_Myiterator<T> const_itr;
+	typedef Myiterator<T> itr;
+	typedef const_Myiterator<T> const_itr;
+	typedef list_node* Link_type;
+private:
+	Link_type head;
+	Link_type tail;
+	int size=0;
+	public:
+		MyList() {		
+			head = new list_node;
+			tail= new list_node;
+			head->next = tail;
+			tail->pre = head;
+			size = 0;
+		}
+		/*~MyList() {
+			clear();
+			delete head;
+			delete tail;
+		}*/
+		const_itr begin()const {
+			return const_itr(head->next);
+		}
+		itr begin() {
+			return itr(head->next);
+		}
+		const_itr end()const {
+			return const_itr(tail);
+		}
+		itr end() {
+			return itr(tail);
+		}
+		itr insert(itr i, T& x) {
+			Link_type tmp = i.cur;
+			size++;
+			return itr(tmp->pre = tmp->pre->next = new list_node(x, tmp->pre, tmp));
+		}//从头插入或从尾插入
+		
+		itr erase(itr i) {
+			Link_type tmp = i.cur;
+			size--;
+			itr res = itr(tmp->next);//记录被删除项的下一项
+			tmp->pre->next = tmp->next;
+			tmp->next->pre = tmp->pre;
+			delete tmp;
+			return res;
+		}
+		itr erase(itr start, itr end) {
+			for (itr from = start;from!= end;)
+				from = erase(from);
+			return end;
+		}
+		itr find(T& x) {
+			itr from=begin();
+			itr _end =end();
+			for (;from!= _end;++from) {
+				if (*from == x) {
+					cout << "Have found!  " << "The val is  "<<*from<<endl;
+					break;
+				}
+			}
+			return from;
+		}
+		int _size() {
+			return size;
+		}
+		bool empty() {
+			return size == 0;
+		}
+		void clear() {
+			if (!empty()) {
+				erase(begin(), end());
+			}
+		}
+	};	
+}
+
+using namespace _list;
+
+int main() {
+	MyList<int> l;
+	for (int i = 0;i < 10;i++) {
+		auto _begin = l.begin();
+		l.insert(_begin,i);
+	}
+	for (int i = 1;i < 13;i += 2) {
+		l.find(i);
+	}
+	cout << l._size()<<endl;
+	if (!l.empty()) {
+		l.clear();
+	}
+	cout << l._size();
+
+}

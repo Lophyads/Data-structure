@@ -1,0 +1,28 @@
+#include<iostream>
+#include<vector>
+#include<unordered_map>
+#include<set>
+using namespace std;
+class Fenwick{
+	private:
+		vector<int> sum;
+		static inline int lowbit(int x){
+			return x&(-x);
+		}
+	public:
+		Fenwick(int n):sum(n+1,0){}
+		void updata(int i,int val){
+			while(i<sum.size()){
+				sum[i]+=val;
+				i+=lowbit(i);
+			}
+		}//i从1开始 
+		int query(int i){
+			int res=0;
+			while(i<sum.size()){
+				res+=sum[i];
+				i-=lowbit(i)
+			}
+			return res;
+		}//查询前i个数的前缀和 
+};

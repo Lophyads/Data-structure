@@ -1,0 +1,143 @@
+namespace Splaytree {
+	template<class T>
+	class splaytree {
+	private:
+		struct TreeNode {
+			T val=T();
+			TreeNode* left=nullptr;
+			TreeNode* right=nullptr;
+			TreeNode(T x):val(x),left(nullptr),right(nullptr){}
+			TreeNode(){}
+			};
+		TreeNode* _root=new TreeNode;
+		TreeNode* nullnode;	
+	public:
+		splaytree() {
+			nullnode = new TreeNode;
+			_root = new TreeNode;
+			nullnode->left = nullnode->right = nullnode;
+			_root = nullnode;
+		}//构造函数
+		~splaytree() {
+			makeempty();
+		}
+		void insert(const T &x) {
+			static TreeNode* newnode=NULL;
+			if (newnode == nullptr) { newnode = new TreeNode; }
+			newnode->val = x;
+			if (_root ==nullnode)
+			{			
+				_root = newnode;
+				newnode->left = newnode->right = nullnode;
+				cout << x<<endl;
+			}
+			else {
+				splay(x, _root);
+				if (x < _root->val) {
+					newnode->left = _root->left;
+					newnode->right = _root;
+					_root->left = nullnode;
+					_root = newnode;
+				}
+				else if (x > _root->val) {
+					newnode->right = _root->right;
+					newnode->left = _root;
+					_root->right = nullnode;
+					_root = newnode;
+				}
+				else return;
+			}
+			newnode = nullptr;
+		}
+		void printTree(TreeNode* &node){
+			if (node == nullnode){
+				return;
+			}
+			cout << node->val << endl;
+			printTree(node->left);
+			printTree(node->right);
+		}
+		void print() {
+			 printTree(_root);
+		}
+		
+		void find(const T& x) {
+			if (_root==nullnode) return;
+			splay(x, _root);
+			if (_root->val != x)
+				cout << "notfind" << endl;
+			else
+				cout << "found" << endl;
+		}
+		bool empty() {
+			return _root == nullnode;
+		}
+		void makeempty() {
+			while (!empty()) {
+				remove(_root->val);
+			}
+		}
+		
+	private:
+		void splay(const T& x, TreeNode *& _root) {
+			TreeNode* leftmax, * rightmin;
+			static TreeNode header;
+			header.left = header.right = nullnode;
+			leftmax = rightmin = &header;
+			nullnode->val = x;
+			while(true){
+				if (x < _root->val) {
+					if (_root->left == nullnode)
+						break;
+					else if (x < _root->left->val)
+						rotateL(_root);	
+					rightmin->left = _root;
+					rightmin = _root;
+					_root = _root->left;
+				}
+				else if (x > _root->val) {
+					if (x > _root->right->val)
+						rotateR(_root);
+					if (_root->right == nullnode)
+						break;
+					leftmax->right = _root;
+					leftmax = _root;
+					_root = _root->right;
+				}
+				else break;
+			}
+			leftmax->right = _root->left;
+			rightmin->left = _root->right;
+			_root->left = header.right;
+			_root->right = header.left;		
+		}
+		void rotateL(TreeNode* &_root) {
+			TreeNode* l = _root->left;
+			_root->left = l->right;
+			l->right = _root;
+			_root = l;
+		}
+		void rotateR(TreeNode* &_root) {
+			TreeNode* r = _root->right;
+			_root->right = r->left;
+			r->left = _root;
+			_root = r;
+		}
+		void remove(const T& x) {
+			TreeNode* newroot=_root ;
+			splay(x, _root);//把要删除的结点旋转到根处
+			if (_root->val != x) return;
+			//右树附到原根左儿子上完成删除
+			if (_root->left == nullnode) {
+				newroot = _root->right;
+			}
+			else {
+				newroot = _root->left;
+				splay(x, newroot);
+				newroot->right = _root->right;
+			}
+			delete _root;
+			_root = newroot;
+		}
+	};		
+}
