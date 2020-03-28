@@ -1,0 +1,47 @@
+#include<iostream>
+#include<vector>
+using namespace std;
+class Trie{
+public:
+	Trie():_root(new TreNode()){}
+	
+	/*把一个单词插入前缀树*/ 
+	void insert(const string& word){
+		TreeNode* cur=_root.get();
+		for(const char& c:word){
+			if(!cur->child[c-'a'])
+				cur->child[c-'a']=new TreeNode();
+			cur=cur->child[c-'a']; 
+		}
+		cur->is_word=true;
+	}
+	/*查找一个单词是否在前缀树中*/ 
+	bool search(const string& word)const{
+		const TreeNode* p=find(word);
+		return p&&p->is_word;
+	}
+	/*查找是否有任何单词以该前缀开始*/
+	bool startwith(const string& prefix)const{
+		return find(prefix);
+	} 
+private:
+	struct TreeNode{	
+		TreeNode():is_word(false),child(26,nunllptr){}
+		~TreeNode(){
+			for(TreeNode* c:child){
+				if(c) delete c;
+			}
+		}
+		bool is_word;
+		vector<TreeNode*> child;
+	};
+	std::unique_ptr<TreeNode> _root; //一个智能指针，这样不需要自己手动回收内存 
+	const TreeNode* find(const string& prefix)const{
+		const TreeNode* p=_root.get();//获得原始指针
+		for(const char &c:prefix ){
+			p=p->child[c-'a'];
+			if(!p) break;
+		}
+		return p;	
+	} 
+}
