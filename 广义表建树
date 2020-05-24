@@ -1,0 +1,99 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+typedef struct node {
+    char data;
+    struct node* leftchild;
+    struct node* rightchild;
+}Node;
+#define T Node*
+#define string char*
+typedef struct stack {
+    T* base;
+    T* top;
+    int size;
+}my_stack;
+void init(my_stack* s) {
+    s->base = (T*)malloc(sizeof(T) * 100);
+    s->top = s->base;
+    s->size = 100;
+}
+void push(my_stack* s, T val) {
+    if (s->top - s->base >= s->size) {
+        T* t = (T*)realloc(s->base, (s->size * 2));
+        if (t == NULL) exit(-1);
+        s->base = t;
+        s->top = s->base + s->size;
+        s->size *= 2;
+    }
+    *(s->top) = val;
+    s->top++;
+}
+void pop(my_stack* s) {
+    if (s->top == s->base) exit(-1);
+    s->top--;
+}
+T top(my_stack* s) {
+    if (s->top == s->base) exit(-1);
+    return *(s->top - 1);
+}
+void print(Node * root, int t){
+    if (root==NULL) return;
+    print(root->rightchild,t+1);
+    for(int i=0;i<t;i++) printf("\t");
+    printf("%c\n",root->data);
+    print(root->leftchild,t+1);
+}
+T create_bt(string str) {
+    my_stack* s = (my_stack*)malloc(sizeof(my_stack));
+    init(s);
+    Node* root = (Node*)malloc(sizeof(Node));
+    root->data = str[0];
+    root->leftchild = NULL;
+    root->rightchild = NULL;
+    push(s, root);
+    int need_left = 0;
+    for (int i = 1; i < (int)strlen(str); i++) {
+        if (str[i] == '(') {
+            need_left = 1;
+            Node* tmp = (Node*)malloc(sizeof(Node));
+            tmp->data = str[i];
+            tmp->leftchild = NULL;
+            tmp->rightchild = NULL;
+            push(s, tmp);
+        }
+        else if (str[i] == ',') {
+            need_left = 0;
+        }
+        else if (str[i] == ')') {
+            pop(s);
+        }
+        else {
+            if (need_left) {
+                pop(s);
+                Node* tmp = (Node*)malloc(sizeof(Node));
+                tmp->data = str[i];
+                tmp->leftchild = NULL;
+                tmp->rightchild = NULL;
+                top(s)->leftchild = tmp;
+                push(s, top(s)->leftchild);
+            }
+            else {
+                pop(s);
+                Node* tmp = (Node*)malloc(sizeof(Node));
+                tmp->data = str[i];
+                tmp->leftchild = NULL;
+                tmp->rightchild = NULL;
+                top(s)->rightchild = tmp;
+                push(s, top(s)->rightchild);
+            }
+        }
+    }
+    return top(s);
+}
+int main() {
+    char str[100];
+    gets(str);
+    Node* root = create_bt(str);
+    print(root,0);
+}
