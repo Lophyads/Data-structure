@@ -19,7 +19,7 @@ class Fenwick{
 		}//i从1开始 
 		int query(int i){
 			int res=0;
-			while(i<sum.size()){
+			while(i){
 				res+=sum[i];
 				i-=lowbit(i)
 			}
