@@ -65,7 +65,7 @@ namespace SOLVE{
             vector<pair<pair<int,int>,int>> a(n);
             for(int i = 0; i < n; i++) a[i] = {{c[i], c[(i + (1 << k)) % n]}, i};
             //sort(a.begin(), a.end());做法一,使用nlogn的排序
-            Radix_Sort(a);
+            Radix_Sort(a);//O(n)基数排序
             for(int i = 0; i < n; i++) ans[i] = a[i].second;
             c[ans[0]] = 0;
             for(int i = 1; i < n; i++){
