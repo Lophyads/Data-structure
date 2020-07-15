@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main(){
+        string s;
+        cin >> s;
+        s += '$';//加一个标识符来替代空串后缀
+        int n = s.size();
+        vector<int> ans(n), c(n);
+        //ans存后缀的开始下标,按后缀大小升序排序
+        //c数组用来快速比较字符串大小
+        {//预处理
+            vector<pair<char, int>> a(n);
+            for(int i = 0; i < n; i++) a[i] = {s[i], i};
+            sort(a.begin(), a.end());
+
+            for(int i = 0; i < n; i++) ans[i] = a[i].second;
+            c[ans[0]] = 0;
+            for(int i = 1; i < n; i++){
+                if(a[i].first == a[i - 1].first)
+                    c[ans[i]] = c[ans[i -1]];
+                else
+                    c[ans[i]] = c[ans[i - 1]] + 1;
+            }
+        }
+        int k = 0;
+        while((1 << k) < n){
+            vector<pair<pair<int,int>,int>> a(n);
+            for(int i = 0; i < n; i++) a[i] = {{c[i], c[(i + (1 << k)) % n]}, i};
+            sort(a.begin(), a.end());
+            for(int i = 0; i < n; i++) ans[i] = a[i].second;
+            c[ans[0]] = 0;
+            for(int i = 1; i < n; i++){
+                if(a[i].first == a[i - 1].first)
+                    c[ans[i]] = c[ans[i -1]];
+                else
+                    c[ans[i]] = c[ans[i - 1]] + 1;
+            }
+            k++;
+        }
+        for(auto& i : ans) cout << i << " ";
+        cout << endl;
+        return 0;
+    }
+}
