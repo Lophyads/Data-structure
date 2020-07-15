@@ -1,6 +1,44 @@
+//做法一 O(nlog²n)
+//做法二 使用Radix_Sort 复杂度降至O(nlogn)
 #include <bits/stdc++.h>
 using namespace std;
-int main(){
+//#define LOCAl
+#define fr(x) freopen(x,"r",stdin)
+#define fw(x) freopen(x,"w",stdout)
+namespace SOLVE{
+    void Radix_Sort(vector<pair<pair<int,int>,int>>& a){
+        {
+            int n = a.size();
+            vector<int> cnt(n);
+            for(auto& x : a) cnt[x.first.second]++;
+            vector<int> pos(n, 0);
+            vector<pair<pair<int,int>,int>> a_new(n);
+            for(int i = 1; i < n; i++) pos[i] = pos[i - 1] + cnt[i - 1];
+            for(auto& x : a){
+                int i = x.first.second;
+                a_new[pos[i]] = x;
+                pos[i] ++;
+            }
+            a = a_new;
+        }
+
+        {
+            int n = a.size();
+            vector<int> cnt(n);
+            for(auto& x : a) cnt[x.first.first]++;
+            vector<int> pos(n, 0);
+            vector<pair<pair<int,int>,int>> a_new(n);
+            for(int i = 1; i < n; i++) pos[i] = pos[i - 1] + cnt[i - 1];
+            for(auto& x : a){
+                int i = x.first.first;
+                a_new[pos[i]] = x;
+                pos[i] ++;
+            }
+            a = a_new;
+        }
+
+    }
+    int main(){
         string s;
         cin >> s;
         s += '$';//加一个标识符来替代空串后缀
@@ -26,7 +64,8 @@ int main(){
         while((1 << k) < n){
             vector<pair<pair<int,int>,int>> a(n);
             for(int i = 0; i < n; i++) a[i] = {{c[i], c[(i + (1 << k)) % n]}, i};
-            sort(a.begin(), a.end());
+            //sort(a.begin(), a.end());做法一,使用nlogn的排序
+            Radix_Sort(a);
             for(int i = 0; i < n; i++) ans[i] = a[i].second;
             c[ans[0]] = 0;
             for(int i = 1; i < n; i++){
@@ -41,4 +80,18 @@ int main(){
         cout << endl;
         return 0;
     }
+}
+int main(){
+#ifdef LOCAl
+    fr("D:\\Algorithm\\input.txt");
+    fw("D:\\Algorithm\\output.txt");
+    int t ;
+    cin >> t;
+    for(int i = 1; i <= t; i++){
+        cout << "CASE #" << t << ":";
+        SOLVE::main();
+    }
+#endif
+    SOLVE::main();
+    return 0;
 }
