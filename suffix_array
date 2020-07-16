@@ -1,11 +1,53 @@
 //做法一 O(nlog²n)
-//做法二 使用Radix_Sort 复杂度降至O(nlogn)
+//做法二 使用Radix_Sort 或 count_sort 复杂度降至O(nlogn)
 #include <bits/stdc++.h>
 using namespace std;
 //#define LOCAl
 #define fr(x) freopen(x,"r",stdin)
 #define fw(x) freopen(x,"w",stdout)
 namespace SOLVE{
+    const int N = 1000010;
+    int sa[N], rk[N << 1], oldrk[N << 1];//sa[i]记录所有后缀排序后第i小的后缀的编号,rk[i]表示后缀i的排名
+    char s[N];
+{//简易版后缀数组
+    scanf("%s", s);
+    n = strlen(s);
+    //s[n++] = '$';
+    for(int i = 0; i < n; i++) sa[i] = i, rk[i] = s[i];
+    int k = 0;
+    while((1 << k) < n){
+        sort(sa, sa + n, [&](const int& x, const int& y){
+            return rk[x] == rk[y] ? rk[x + (1 << k)] < rk[y + (1 << k)] : rk[x] < rk[y];
+        });
+        memcpy(oldrk,rk,sizeof(rk));
+        //更新rk数组
+        oldrk[sa[0]] = rk[sa[0]] = 0;
+        for(int i = 1, rank = 0; i < n; i++){
+           if(oldrk[sa[i]] == oldrk[sa[i - 1]] and oldrk[sa[i] + (1 << k)] == oldrk[sa[i - 1] + (1 << k)])
+               rk[sa[i]] = rank;
+           else rk[sa[i]] = ++rank;
+        }
+        k++;
+    }
+    for(int i = 0; i < n; i++) printf("%d ", sa[i]);
+    puts("");
+    return 0;
+}
+    void count_sort(vector<int>& ans, vector<int>& c){
+        int n = ans.size();
+        vector<int> cnt(n);
+        for(auto& x : c) cnt[x]++;
+        vector<int> ans_new(n);
+        vector<int> pos(n);
+        pos[0] = 0;
+        for(int i = 1;i < n; i++) pos[i] = pos[i - 1] + cnt[i - 1];
+        for (auto& x : ans) {
+            int i = c[x];
+            ans_new[pos[i]] = x;
+            pos[i]++;
+        }
+        ans = ans_new;
+    }
     void Radix_Sort(vector<pair<pair<int,int>,int>>& a){
         {
             int n = a.size();
@@ -62,10 +104,25 @@ namespace SOLVE{
         }
         int k = 0;
         while((1 << k) < n){
-            vector<pair<pair<int,int>,int>> a(n);
+            for(int i = 0; i < n; i ++){
+                ans[i] = (ans[i] - (1 << k) + n) % n;
+            }
+            count_sort(ans, c);
+            vector<int> c_new(n);
+            c_new[ans[0]] = 0;
+            for(int i = 1; i < n; i++){
+                pair<int,int> prev = {c[ans[i - 1]], c[(ans[i - 1] + (1 << k)) % n]};
+                pair<int,int> now = {c[ans[i]], c[(ans[i] + (1 << k)) % n]};
+                if(now == prev) c_new[ans[i]] = c_new[ans[i - 1]];
+                else c_new[ans[i]] = c_new[ans[i - 1]] + 1;
+            }
+            c = c_new;
+            k++;
+            /*使用基数排序
+             * vector<pair<pair<int,int>,int>> a(n);
             for(int i = 0; i < n; i++) a[i] = {{c[i], c[(i + (1 << k)) % n]}, i};
             //sort(a.begin(), a.end());做法一,使用nlogn的排序
-            Radix_Sort(a);//O(n)基数排序
+            Radix_Sort(a);
             for(int i = 0; i < n; i++) ans[i] = a[i].second;
             c[ans[0]] = 0;
             for(int i = 1; i < n; i++){
@@ -74,7 +131,7 @@ namespace SOLVE{
                 else
                     c[ans[i]] = c[ans[i - 1]] + 1;
             }
-            k++;
+            k++;*/
         }
         for(auto& i : ans) cout << i << " ";
         cout << endl;
