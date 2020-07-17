@@ -1,10 +1,7 @@
-#include<iostream>
-#include<vector>
-using namespace std;
+
 class Trie{
 public:
-	Trie():_root(new TreNode()){}
-	
+	Trie():_root(new TreeNode()){}
 	/*把一个单词插入前缀树*/ 
 	void insert(const string& word){
 		TreeNode* cur=_root.get();
@@ -26,7 +23,7 @@ public:
 	} 
 private:
 	struct TreeNode{	
-		TreeNode():is_word(false),child(26,nunllptr){}
+		TreeNode():is_word(false),child(26,nullptr){}
 		~TreeNode(){
 			for(TreeNode* c:child){
 				if(c) delete c;
@@ -44,4 +41,4 @@ private:
 		}
 		return p;	
 	} 
-}
+};
