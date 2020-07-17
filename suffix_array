@@ -6,33 +6,43 @@ using namespace std;
 #define fr(x) freopen(x,"r",stdin)
 #define fw(x) freopen(x,"w",stdout)
 namespace SOLVE{
+    {//简易版后缀数组
     const int N = 1000010;
     int sa[N], rk[N << 1], oldrk[N << 1];//sa[i]记录所有后缀排序后第i小的后缀的编号,rk[i]表示后缀i的排名
     char s[N];
-{//简易版后缀数组
-    scanf("%s", s);
-    n = strlen(s);
-    //s[n++] = '$';
-    for(int i = 0; i < n; i++) sa[i] = i, rk[i] = s[i];
-    int k = 0;
-    while((1 << k) < n){
-        sort(sa, sa + n, [&](const int& x, const int& y){
-            return rk[x] == rk[y] ? rk[x + (1 << k)] < rk[y + (1 << k)] : rk[x] < rk[y];
-        });
-        memcpy(oldrk,rk,sizeof(rk));
-        //更新rk数组
-        oldrk[sa[0]] = rk[sa[0]] = 0;
-        for(int i = 1, rank = 0; i < n; i++){
-           if(oldrk[sa[i]] == oldrk[sa[i - 1]] and oldrk[sa[i] + (1 << k)] == oldrk[sa[i - 1] + (1 << k)])
-               rk[sa[i]] = rank;
-           else rk[sa[i]] = ++rank;
+        scanf("%s", s);
+        int n = strlen(s);
+        s[n++] = '$';
+        for(int i = 0; i < n; i++) sa[i] = i, rk[i] = s[i];
+        int k = 0;
+        while((1 << k) < n){
+            sort(sa, sa + n, [&](const int& x, const int& y){
+                return rk[x] == rk[y] ? rk[x + (1 << k)] < rk[y + (1 << k)] : rk[x] < rk[y];
+            });
+            memcpy(oldrk,rk,sizeof(rk));
+            //更新rk数组
+            oldrk[sa[0]] = rk[sa[0]] = 0;
+            for(int i = 1, rank = 0; i < n; i++){
+                if(oldrk[sa[i]] == oldrk[sa[i - 1]] and oldrk[sa[i] + (1 << k)] == oldrk[sa[i - 1] + (1 << k)])
+                    rk[sa[i]] = rank;
+                else rk[sa[i]] = ++rank;
+            }
+            k++;
         }
-        k++;
+        int lcp[n];//lcp[i]为后缀数组中第i个字符串和第i - 1个字符串的最长公共前缀
+        k = 0;
+        for(int i = 0; i < n - 1; i++){
+            int idx = rk[i];
+            int j = sa[idx - 1];
+            while(s[i + k] == s[j + k]) k++;
+            lcp[idx] = k;
+            k = max(k - 1, 0);
+        }
+        for(int i = 0; i < n; i++) printf("%d ", sa[i]);
+        puts("");
+        for(int i = 1; i < n; i++) printf("%d ", lcp[i]);
+        return 0;
     }
-    for(int i = 0; i < n; i++) printf("%d ", sa[i]);
-    puts("");
-    return 0;
-}
     void count_sort(vector<int>& ans, vector<int>& c){
         int n = ans.size();
         vector<int> cnt(n);
@@ -132,6 +142,17 @@ namespace SOLVE{
                     c[ans[i]] = c[ans[i - 1]] + 1;
             }
             k++;*/
+        }
+        vector<int> lcp(n);//lcp[i]为后缀数组中第i个字符串和第i - 1个字符串的最长公共前缀
+        {
+            k = 0;
+            for(int i = 0; i < n - 1; i++){
+                int idx = c[i];
+                int j = ans[idx - 1];
+                while(s[idx + k] == s[j + k]) k++;
+                lcp[idx] = k;
+                k = max(k - 1, 0);
+            }
         }
         for(auto& i : ans) cout << i << " ";
         cout << endl;
