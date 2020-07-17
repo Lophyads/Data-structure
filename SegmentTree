@@ -1,30 +1,31 @@
-struct SegmentTreeNode{
+typedef struct SegmentTreeNode{
     int start,end,sum;
     SegmentTreeNode* left;
     SegmentTreeNode* right;
-    SegmentTreeNode(int a,int ,b):start(a),end(b),sum(0),left(NULL),right(NULL){}
-};
-SegmentTreeNode* buildTree(vector<int> nums, int start,int end)
+    SegmentTreeNode(int a,int b):start(a),end(b),sum(0),left(NULL),right(NULL){}
+}st;
+SegmentTreeNode* buildTree(vector<int>& nums, int start,int end)
 {
-    if(start<end) 
-    return NULL;
+    if(start > end) 
+    	return NULL;
     SegmentTreeNode* root=new SegmentTreeNode(start,end);
     if(start==end)
     {
-        sum=nums[start];
+        root->sum=nums[start];
         return root;
     }
     int mid=start+(end-start)/2;
-    root->left=SegmentTreeNode(nums,start,mid);
-    root->right=SegmentTreeNode(nums,mid+1,end);
+    root->left=buildTree(nums,start,mid);
+    root->right=buildTree(nums,mid+1,end);
     root->sum=root->left->sum+root->right->sum;
     return root;
 }
 int modifyTree(int index,int val,SegmentTreeNode* root)
 {
     if(root==NULL)
-    return 0;
-    if(index==root->start&&index==root->right)
+    	return 0;
+    int diff = 0;
+    if(index==root->start&&index==root->end)
     {
         diff=val-root->sum;
         root->sum=val;
@@ -40,15 +41,15 @@ int modifyTree(int index,int val,SegmentTreeNode* root)
         diff=modifyTree(index,val,root->left);
     }
     root->sum+=diff;
-    reurn diff;
+    return diff;
 }
-int queryTree(int i,int j,SegmentTreeNode* root)
+int queryTree(int l,int r,SegmentTreeNode* root)
 {
-    if(root=NULL) return 0;
-    if(i==root->start&&j==root->right)
-    return root->sum;
+    if(root == NULL) return 0;
+    if(l == root->start && r == root->end)
+    	return root->sum;
     int mid=(root->start+root->end)/2;
-    if(i>mid) return queryTree(i,j,root->right);
-    if(j<=mid) return queryTree(i,j,root->left);
-    return queryTree(i,mid,root->left)+queryTree(mid+1,j,root->right);
+    if(l > mid) return queryTree(l, r, root->right);
+    if(r <= mid) return queryTree(l, r, root->left);
+    return queryTree(l,mid,root->left)+queryTree(mid+1,r,root->right);
 }
