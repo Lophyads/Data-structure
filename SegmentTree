@@ -1,3 +1,54 @@
+/*版本一
+class SegmentTree{
+public:
+    SegmentTree(int n) {
+        size = 1;
+        while(size < n) size *= 2;
+        sum.assign(2 * size, 0ll);
+    }
+    void buildTree(vector<int>& arr){
+        buildTree(arr, 0, 0, size);
+    }
+    void set(int idx, int val){
+        set(idx, val,0, 0, size);
+    }
+    int query(int l, int r){
+        return query(l, r, 0, 0, size);
+    }
+private:
+    int size = 0;
+    vector<long long> sum;
+    void buildTree(vector<int>& arr, int now, int l, int r){
+        if(r - l == 1){
+            if(l < (int)arr.size()){
+                sum[now] = arr[l]; 
+            }
+            return ;
+        }
+        int mid = (l + r) / 2;
+        buildTree(arr, now * 2 + 1, l, mid);
+        buildTree(arr, now * 2 + 2, mid, r);
+        sum[now] = sum[now * 2 + 1] + sum[now * 2 + 2];
+    }
+    void set(int idx, int val, int now, int l, int r){
+        if(r - l == 1){
+            sum[now] = val;
+            return;
+        }
+        int mid = (l + r) >> 1;
+        if(idx < mid) set(idx, val, now * 2 + 1, l, mid);
+        else set(idx, val, now * 2 + 2, mid, r);
+        sum[now] = sum[now * 2 + 1] + sum[now * 2 + 2];
+    }
+    long long query(int l, int r, int now, int lx, int rx){
+        if(l >= rx or r <= lx) return 0;
+        if(lx >= l and rx <= r) return sum[now];
+        int mid = (lx + rx) >> 1;
+        return query(l, r, now * 2 + 1, lx, mid) + query(l, r, now * 2 + 2, mid, rx);
+    }
+};
+*/
+/*版本二
 typedef struct SegmentTreeNode{
     int start,end,sum;
     SegmentTreeNode* left;
@@ -53,3 +104,4 @@ int queryTree(int l,int r,SegmentTreeNode* root)
     if(r <= mid) return queryTree(l, r, root->left);
     return queryTree(l,mid,root->left)+queryTree(mid+1,r,root->right);
 }
+*/
