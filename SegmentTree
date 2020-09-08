@@ -1,107 +1,131 @@
-/*版本一
-class SegmentTree{
-public:
-    SegmentTree(int n) {
-        size = 1;
-        while(size < n) size *= 2;
-        sum.assign(2 * size, 0ll);
-    }
-    void buildTree(vector<int>& arr){
-        buildTree(arr, 0, 0, size);
-    }
-    void set(int idx, int val){
-        set(idx, val,0, 0, size);
-    }
-    int query(int l, int r){
-        return query(l, r, 0, 0, size);
-    }
-private:
-    int size = 0;
-    vector<long long> sum;
-    void buildTree(vector<int>& arr, int now, int l, int r){
-        if(r - l == 1){
-            if(l < (int)arr.size()){
-                sum[now] = arr[l]; 
-            }
-            return ;
-        }
-        int mid = (l + r) / 2;
-        buildTree(arr, now * 2 + 1, l, mid);
-        buildTree(arr, now * 2 + 2, mid, r);
-        sum[now] = sum[now * 2 + 1] + sum[now * 2 + 2];
-    }
-    void set(int idx, int val, int now, int l, int r){
-        if(r - l == 1){
-            sum[now] = val;
-            return;
-        }
-        int mid = (l + r) >> 1;
-        if(idx < mid) set(idx, val, now * 2 + 1, l, mid);
-        else set(idx, val, now * 2 + 2, mid, r);
-        sum[now] = sum[now * 2 + 1] + sum[now * 2 + 2];
-    }
-    long long query(int l, int r, int now, int lx, int rx){
-        if(l >= rx or r <= lx) return 0;
-        if(lx >= l and rx <= r) return sum[now];
-        int mid = (lx + rx) >> 1;
-        return query(l, r, now * 2 + 1, lx, mid) + query(l, r, now * 2 + 2, mid, rx);
-    }
-};
-*/
-/*版本二
-typedef struct SegmentTreeNode{
-    int start,end,sum;
-    SegmentTreeNode* left;
-    SegmentTreeNode* right;
-    SegmentTreeNode(int a,int b):start(a),end(b),sum(0),left(NULL),right(NULL){}
-}st;
-SegmentTreeNode* buildTree(vector<int>& nums, int start,int end)
-{
-    if(start > end) 
-    	return NULL;
-    SegmentTreeNode* root=new SegmentTreeNode(start,end);
-    if(start==end)
-    {
-        root->sum=nums[start];
-        return root;
-    }
-    int mid=start+(end-start)/2;
-    root->left=buildTree(nums,start,mid);
-    root->right=buildTree(nums,mid+1,end);
-    root->sum=root->left->sum+root->right->sum;
-    return root;
+#include<bits/stdc++.h>
+using namespace std;
+#define _rep(i, x, y) for(int i = (int)x; i < (int)y; ++i)
+#define _dep(i,x,y) for(int i = (int)x; i > (int)y; i--)
+#define PII pair<int,int>
+#define eb emplace_back
+#define pb push_back
+#define fi first
+#define se second
+#define PQ priority_queue
+#define lb lower_bound
+#define ub upper_bound
+typedef long long ll;
+typedef vector<int> VI;
+const int mod = 1e9 + 7;
+const int KINF = 0x3f3f3f3f;
+const int N = 1e5 + 10;
+ll sum[N << 2];
+int a[N];
+void Pushup(int id){
+	sum[id] = sum[id << 1] + sum[id << 1 | 1];
 }
-int modifyTree(int index,int val,SegmentTreeNode* root)
-{
-    if(root==NULL)
-    	return 0;
-    int diff = 0;
-    if(index==root->start&&index==root->end)
-    {
-        diff=val-root->sum;
-        root->sum=val;
-        return diff;
-    }
-    int mid=(root->start+root->end)/2;
-    if(index>mid)
-    {
-        diff=modifyTree(index,val,root->right);
-    }
-    else
-    {
-        diff=modifyTree(index,val,root->left);
-    }
-    root->sum+=diff;
-    return diff;
+void build(int id, int l, int r){
+	if(l == r) {
+		sum[id] = a[l];
+		return;
+	}
+	int m = (l + r) >> 1;
+	build(id << 1, l, m);
+	build(id << 1 | 1, m + 1, r);
+	Pushup(id);
 }
-int queryTree(int l,int r,SegmentTreeNode* root)
-{
-    if(root == NULL) return 0;
-    if(l == root->start && r == root->end)
-    	return root->sum;
-    int mid=(root->start+root->end)/2;
-    if(l > mid) return queryTree(l, r, root->right);
-    if(r <= mid) return queryTree(l, r, root->left);
-    return queryTree(l,mid,root->left)+queryTree(mid+1,r,root->right);
+void update(int id, int l, int r, int k, int v){//单点修改
+	if(l == k && r == k) {
+		sum[id] = v;
+		return ;
+	}
+	int m = (l + r) >> 1;
+	if(k <= m) update(id << 1, l, m, k, v);
+	else update(id << 1 | 1, m + 1, r, k, v);
+	Pushup(id);
 }
-*/
+ll query(int id, int l, int r, int s, int e){//区间查询
+	if(s <= l && r <= e) return sum[id];
+	int m = (l + r) >> 1;
+	if(e <= m) return query(id << 1, l, m, s, e);
+	else if(s > m) return query(id << 1 | 1, m + 1, r, s, e);
+	else return query(id << 1, l, m, s, m) + query(id << 1 | 1, m + 1, r, m + 1, e);
+}
+int main(){
+	ios::sync_with_stdio(false); cin.tie(0);
+	int n, m;
+	cin >> n >> m;
+	_rep(i, 1, n + 1) cin >> a[i];
+	build(1, 1, n);
+	while(m --){
+		int op, x, y;
+		cin >> op >> x >> y;
+		x ++;
+		if(op == 1)
+			update(1, 1, n, x, y);
+		else cout << query(1, 1, n, x, y) << endl;
+	}
+	return 0;
+}
+//区间修改及区间查询
+#define LC id << 1
+#define RC id << 1 | 1
+typedef long long ll;
+typedef vector<int> VI;
+const int mod = 1e9 + 7;
+const int KINF = 0x3f3f3f3f;
+const int N = 1e5 + 10;
+PII mi[N << 2];
+int a[N];
+void Pushup(int id){
+	if(mi[LC].fi < mi[RC].fi) mi[id] = mi[LC];
+	else if(mi[RC].fi < mi[LC].fi) mi[id] = mi[RC];
+	else mi[id] = {mi[LC].fi, mi[LC].se + mi[RC].se};
+}
+void build(int id, int l, int r){
+	if(l == r) {
+		mi[id] = {a[l], 1};
+		return;
+	}
+	int m = (l + r) >> 1;
+	build(id << 1, l, m);
+	build(id << 1 | 1, m + 1, r);
+	Pushup(id);
+}
+void update(int id, int l, int r, int k, int v){//单点修改
+	if(l == k && r == k) {
+		mi[id] = {v, 1};
+		return ;
+	}
+	int m = (l + r) >> 1;
+	if(k <= m) update(id << 1, l, m, k, v);
+	else update(id << 1 | 1, m + 1, r, k, v);
+	Pushup(id);
+}
+PII query(int id, int l, int r, int s, int e){//区间查询
+	if(s <= l && r <= e) return mi[id];
+	int m = (l + r) >> 1;
+	if(e <= m) return query(id << 1, l, m, s, e);
+	else if(s > m) return query(id << 1 | 1, m + 1, r, s, e);
+	PII L = query(LC, l, m, s, m);
+	PII R = query(RC, m + 1, r, m + 1, e);
+	if(L.fi < R.fi) return L;
+	else if(R.fi < L.fi) return R;
+	else return {L.fi, L.se + R.se}; 
+}
+int main(){
+	ios::sync_with_stdio(false); cin.tie(0);
+	int n, m;
+	cin >> n >> m;
+	_rep(i, 1, n + 1) cin >> a[i];
+	build(1, 1, n);
+	while(m --){
+		int op, x, y;
+		cin >> op >> x >> y;
+		x ++;
+		if(op == 1)
+			update(1, 1, n, x, y);
+		else {
+			PII ans = query(1, 1, n, x, y);
+			cout << ans.fi << " " << ans.se << endl;
+		}
+	}
+	return 0;
+} 
+
