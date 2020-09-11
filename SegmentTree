@@ -10,6 +10,8 @@ using namespace std;
 #define PQ priority_queue
 #define lb lower_bound
 #define ub upper_bound
+#define LC id << 1
+#define RC id << 1 | 1
 typedef long long ll;
 typedef vector<int> VI;
 const int mod = 1e9 + 7;
@@ -63,7 +65,7 @@ int main(){
 	}
 	return 0;
 }
-//区间修改及区间查询
+
 #define LC id << 1
 #define RC id << 1 | 1
 typedef long long ll;
@@ -129,3 +131,92 @@ int main(){
 	return 0;
 } 
 
+//区间修改及区间查询
+#include<bits/stdc++.h>
+using namespace std;
+#define _rep(i, x, y) for(int i = (int)x; i < (int)y; ++i)
+#define _dep(i,x,y) for(int i = (int)x; i > (int)y; i--)
+#define PII pair<int,int>
+#define eb emplace_back
+#define pb push_back
+#define fi first
+#define se second
+#define PQ priority_queue
+#define lb lower_bound
+#define ub upper_bound
+#define LC id << 1
+#define RC id << 1 | 1
+typedef long long ll;
+typedef vector<int> VI;
+const int mod = 1e9 + 7;
+const int KINF = 0x3f3f3f3f;
+const int N = 1e5 + 10;
+ll tree[N << 2];
+ll tag[N << 2];//打lazy标记
+ll a[N];
+void Pushup(int id){
+	tree[id] = tree[LC] + tree[RC];
+}
+void add(int id, int l, int r, ll v){
+	tag[id] += v;
+	tree[id] += (r - l + 1) * v;
+}
+void build(int id, int l, int r){
+	if(l == r){
+		tree[id] = a[l];
+		return ;
+	}
+	int m = (l + r) >> 1;
+	build(LC, l ,m);
+	build(RC, m + 1, r);
+	Pushup(id);
+}
+void Pushdown(int id, int l, int r){//下传标记
+	if(!tag[id]) return;
+	int m = (l + r) >> 1;
+	add(LC, l, m, tag[id]);//下传到左子树
+	add(RC, m + 1, r, tag[id]);//下传到右子树
+	tag[id] = 0;//标记清零
+}
+void Update(int id, int l, int r, int s, int e, ll v){
+	if(s <= l && r <= e){
+		add(id, l, r, v);
+		return;
+	}
+	Pushdown(id, l, r);
+	int m  = (l + r) >> 1;
+	if(s <= m) Update(LC, l, m, s, e, v);
+	if(e > m) Update(RC, m + 1, r, s, e, v);
+	Pushup(id);
+}
+ll query(int id, int l, int r, int s, int e){
+	if(l >= s && e >= r) return tree[id];
+	Pushdown(id, l, r);
+	int m = (l + r) >> 1;
+	if(e <= m) return query(LC, l, m, s, e);
+	else if(s > m) return query(RC, m + 1, r, s, e);
+	else return query(LC, l, m, s, m) + query(RC, m + 1, r, m + 1, e);
+}
+int main(){
+	ios::sync_with_stdio(false); cin.tie(0);
+	int n, m;
+	cin >> n >> m;
+	_rep(i, 1, n + 1) cin >> a[i];
+	build(1, 1, n);
+	_rep(i, 0, m){
+		int op;
+		cin >> op;
+		if(op == 1){
+			int x, y;
+			ll k;
+			cin >> x >> y >> k;
+			Update(1, 1, n, x, y, k);//[x, y]区间加上k
+		}
+		else{
+			int x, y;
+			cin >> x >> y;
+			cout << query(1, 1, n, x, y) << endl;//输出[x, y]区间和
+		}
+	}
+	return 0;
+} 
