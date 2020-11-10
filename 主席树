@@ -1,0 +1,43 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define _rep(i, x, y) for(int i = (int)x; i < (int)y; ++i)
+#define _dep(i,x,y) for(int i = (int)x; i > (int)y; i--)
+#define PII pair<int,int>
+#define eb emplace_back
+#define pb push_back
+#define fi first
+#define se second
+#define PQ priority_queue
+#define lb lower_bound
+#define ub upper_bound
+typedef long long ll;
+typedef vector<int> VI;
+constexpr int mod = 1e9 + 7;
+constexpr int KINF = 0x3f3f3f3f;
+constexpr double eps = 1e-7;
+constexpr int N = 1e5 + 10;
+int tr[N * 20], lson[N * 20], rson[N * 20], sum[N * 20];
+int id = 0;
+void build(int& now, int l, int r){
+	now = ++ id;
+	if(l == r) return;
+	int mid = l + r >> 1;
+	build(lson[now], l, mid);
+	build(rson[now], mid + 1, r);
+} 
+void update(int& now, int old, int l, int r, int pos, int v){
+	now = ++ id;
+	tr[now] = tr[old], lson[now] = lson[old], rson[now] = rson[old];// 把旧版本拷到新版本上去
+	sum[now] = sum[old] + v;// 区间和加一
+	if(l == r) return;
+	int mid = l + r >> 1;
+	if(pos <= mid) update(lson[now], lson[old], l, mid, pos, v);// 应该更新的值域区间
+	else update(rson[now], rson[old], mid + 1, r, pos, v);
+}
+int query(int now, int old, int l, int r, int k){// 查找[l, r]区间第k小数(返回对应的下标)
+	if(l == r) return l;
+	int sum_left = sum[lson[now]] - sum[lson[old]];
+	int mid = l + r >> 1;
+	if(k <= sum_left) return query(lson[now], lson[old], l, mid, k);
+	else return query(rson[now], rson[old], mid + 1, r, k - sum_left);
+}
