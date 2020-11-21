@@ -1,24 +1,63 @@
-#include<bits/stdc++.h>
-using namespace std;
-#define _rep(i, x, y) for(int i = (int)x; i < (int)y; ++i)
-#define _dep(i,x,y) for(int i = (int)x; i > (int)y; i--)
-#define PII pair<int,int>
-#define eb emplace_back
-#define pb push_back
-#define fi first
-#define se second
-#define PQ priority_queue
-#define lb lower_bound
-#define ub upper_bound
-#define LC id << 1
-#define RC id << 1 | 1
-typedef long long ll;
-typedef vector<int> VI;
-const int mod = 1e9 + 7;
-const int KINF = 0x3f3f3f3f;
-const int N = 1e5 + 10;
-ll sum[N << 2];
-int a[N];
+struct SegmentTree{
+	int n;
+	VI tag, mx;
+	SegmentTree(int n) : n(n), tag(n << 2), mx(n << 2) {}
+	SegmentTree(const VI& a){
+		n = a.size();
+		tag.resize(n << 2);
+		mx.resize(n << 2);
+		function<void(int, int, int)> build = [&](int id, int l, int r){
+			if(l == r){
+				mx[id] = a[l - 1];
+				return;
+			}
+			int mid = (l + r) >> 1;
+			build(LC, l, mid);
+			build(RC, mid + 1, r);
+			pushup(id);
+		};
+		build(1, 1, n);
+	}
+	void pushup(int id){
+		mx[id] = max(mx[LC], mx[RC]);
+	}
+	void add(int id, int l, int r, int v){
+		tag[id] = max(tag[id], v);
+		mx[id] = max(mx[id], v);
+	}
+	void pushdown(int id, int l, int r){
+		if(!tag[id]) return;
+		int mid = (l + r) >> 1;
+		add(LC, l, mid, tag[id]);
+		add(RC, mid + 1, r, tag[id]);
+		tag[id] = 0;
+	}
+	void update(int id, int l, int r, int s, int e, int v){
+		if(r < s || l > e) return;
+		if(l >= s && r <= e){
+			add(id, l, r, v);
+			return;
+		}
+		pushdown(id, l, r);
+		int mid = (l + r) >> 1;
+		update(LC, l, mid, s, e, v);
+		update(RC, mid + 1, r, s, e, v);
+	}
+	void update(int l, int r, int v){
+		update(1, 1, n, l, r, v);
+	}
+	int query(int id, int l, int r, int pos){
+		if(l == r) return mx[id];
+		pushdown(id, l, r);
+		int mid = (l + r) >> 1;
+		if(pos <= mid) return query(LC, l, mid, pos);
+		return query(RC, mid + 1, r, pos);
+	}
+	int query(int x){
+		return query(1, 1, n, x);
+	}
+};
+//
 void Pushup(int id){
 	sum[id] = sum[id << 1] + sum[id << 1 | 1];
 }
@@ -49,30 +88,7 @@ ll query(int id, int l, int r, int s, int e){//区间查询
 	else if(s > m) return query(id << 1 | 1, m + 1, r, s, e);
 	else return query(id << 1, l, m, s, m) + query(id << 1 | 1, m + 1, r, m + 1, e);
 }
-int main(){
-	ios::sync_with_stdio(false); cin.tie(0);
-	int n, m;
-	cin >> n >> m;
-	_rep(i, 1, n + 1) cin >> a[i];
-	build(1, 1, n);
-	while(m --){
-		int op, x, y;
-		cin >> op >> x >> y;
-		x ++;
-		if(op == 1)
-			update(1, 1, n, x, y);
-		else cout << query(1, 1, n, x, y) << endl;
-	}
-	return 0;
-}
-
-#define LC id << 1
-#define RC id << 1 | 1
-typedef long long ll;
-typedef vector<int> VI;
-const int mod = 1e9 + 7;
-const int KINF = 0x3f3f3f3f;
-const int N = 1e5 + 10;
+//
 PII mi[N << 2];
 int a[N];
 void Pushup(int id){
@@ -197,26 +213,4 @@ ll query(int id, int l, int r, int s, int e){
 	else if(s > m) return query(RC, m + 1, r, s, e);
 	else return query(LC, l, m, s, m) + query(RC, m + 1, r, m + 1, e);
 }
-int main(){
-	ios::sync_with_stdio(false); cin.tie(0);
-	int n, m;
-	cin >> n >> m;
-	_rep(i, 1, n + 1) cin >> a[i];
-	build(1, 1, n);
-	_rep(i, 0, m){
-		int op;
-		cin >> op;
-		if(op == 1){
-			int x, y;
-			ll k;
-			cin >> x >> y >> k;
-			Update(1, 1, n, x, y, k);//[x, y]区间加上k
-		}
-		else{
-			int x, y;
-			cin >> x >> y;
-			cout << query(1, 1, n, x, y) << endl;//输出[x, y]区间和
-		}
-	}
-	return 0;
-} 
+//
