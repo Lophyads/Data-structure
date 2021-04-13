@@ -1,14 +1,16 @@
 struct SegmentTree{
+	#define LC (id << 1)
+	#define RC (id << 1 | 1)
 	int n;
-	VI tag, mx;
-	SegmentTree(int n) : n(n), tag(n << 2), mx(n << 2) {}
+	vector<ll> tag, sum;
+	SegmentTree(int n) : n(n), tag(n << 2), sum(n << 2) {}
 	SegmentTree(const VI& a){
-		n = a.size();
+		n = a.size() - 1;
 		tag.resize(n << 2);
-		mx.resize(n << 2);
+		sum.resize(n << 2);
 		function<void(int, int, int)> build = [&](int id, int l, int r){
-			if(l == r){
-				mx[id] = a[l - 1];
+			if(r == l){
+				sum[id] = a[l];
 				return;
 			}
 			int mid = (l + r) >> 1;
@@ -16,14 +18,14 @@ struct SegmentTree{
 			build(RC, mid + 1, r);
 			pushup(id);
 		};
-		build(1, 1, n);
+		build(1, 0, n);
 	}
 	void pushup(int id){
-		mx[id] = max(mx[LC], mx[RC]);
+		sum[id] = sum[LC] + sum[RC];
 	}
-	void add(int id, int l, int r, int v){
-		tag[id] = max(tag[id], v);
-		mx[id] = max(mx[id], v);
+	void add(int id, int l, int r, ll v){
+		tag[id] += v;
+		sum[id] += (r - l + 1) * v;
 	}
 	void pushdown(int id, int l, int r){
 		if(!tag[id]) return;
@@ -32,7 +34,7 @@ struct SegmentTree{
 		add(RC, mid + 1, r, tag[id]);
 		tag[id] = 0;
 	}
-	void update(int id, int l, int r, int s, int e, int v){
+	void update(int id, int l, int r, int s, int e, ll v){
 		if(r < s || l > e) return;
 		if(l >= s && r <= e){
 			add(id, l, r, v);
@@ -42,22 +44,105 @@ struct SegmentTree{
 		int mid = (l + r) >> 1;
 		update(LC, l, mid, s, e, v);
 		update(RC, mid + 1, r, s, e, v);
+		pushup(id);
 	}
-	void update(int l, int r, int v){
-		update(1, 1, n, l, r, v);
+	void update(int l, int r, ll v){
+		update(1, 0, n, l, r, v);
 	}
-	int query(int id, int l, int r, int pos){
-		if(l == r) return mx[id];
+	ll query(int id, int l, int r, int pos){
+		if(r == l) return sum[id];
 		pushdown(id, l, r);
 		int mid = (l + r) >> 1;
 		if(pos <= mid) return query(LC, l, mid, pos);
 		return query(RC, mid + 1, r, pos);
 	}
-	int query(int x){
-		return query(1, 1, n, x);
+	ll query(int id, int l, int r, int s, int e){
+		if(r < s || l > e) return 0;
+		if(l >= s && r <= e) return sum[id];
+		int mid = (l + r) >> 1;
+		pushdown(id, l, r);
+		return query(LC, l, mid, s, e) + query(RC, mid + 1, r, s, e);
+	}
+	ll query(int l, int r){
+		return query(1, 0, n, l, r);
+	}
+	ll query(int x){
+		return query(1, 0, n, x);
 	}
 };
 //
+struct SegmentTree{
+	#define LC (id << 1)
+	#define RC (id << 1 | 1)
+	int n;
+	vector<ll> tag, sum;
+	SegmentTree(int n) : n(n), tag(n << 2), sum(n << 2) {}
+	SegmentTree(const VI& a){
+		n = a.size();
+		tag.resize(n << 2);
+		sum.resize(n << 2);
+		function<void(int, int, int)> build = [&](int id, int l, int r){
+			if(r - l == 1){
+				sum[id] = a[l];
+				return;
+			}
+			int mid = (l + r) >> 1;
+			build(LC, l, mid);
+			build(RC, mid, r);
+			pushup(id);
+		};
+		build(1, 0, n);
+	}
+	void pushup(int id){
+		sum[id] = sum[LC] + sum[RC];
+	}
+	void add(int id, int l, int r, ll v){
+		tag[id] += v;
+		sum[id] += (r - l) * v;
+	}
+	void pushdown(int id, int l, int r){
+		if(!tag[id]) return;
+		int mid = (l + r) >> 1;
+		add(LC, l, mid, tag[id]);
+		add(RC, mid, r, tag[id]);
+		tag[id] = 0;
+	}
+	void update(int id, int l, int r, int s, int e, ll v){
+		if(r <= s || l >= e) return;
+		if(l >= s && r <= e){
+			add(id, l, r, v);
+			return;
+		}
+		pushdown(id, l, r);
+		int mid = (l + r) >> 1;
+		update(LC, l, mid, s, e, v);
+		update(RC, mid, r, s, e, v);
+		pushup(id);
+	}
+	void update(int l, int r, ll v){
+		update(1, 0, n, l, r, v);
+	}
+	ll query(int id, int l, int r, int pos){
+		if(r - l == 1) return sum[id];
+		pushdown(id, l, r);
+		int mid = (l + r) >> 1;
+		if(pos <= mid) return query(LC, l, mid, pos);
+		return query(RC, mid, r, pos);
+	}
+	ll query(int id, int l, int r, int s, int e){
+		if(r <= s || l >= e) return 0;
+		if(l >= s && r <= e) return sum[id];
+		int mid = (l + r) >> 1;
+		pushdown(id, l, r);
+		return query(LC, l, mid, s, e) + query(RC, mid, r, s, e);
+	}
+	ll query(int l, int r){
+		return query(1, 0, n, l, r);
+	}
+	ll query(int x){
+		return query(1, 0, n, x);
+	}
+};
 void Pushup(int id){
 	sum[id] = sum[id << 1] + sum[id << 1 | 1];
 }
@@ -214,3 +299,296 @@ ll query(int id, int l, int r, int s, int e){
 	else return query(LC, l, m, s, m) + query(RC, m + 1, r, m + 1, e);
 }
 //
+namespace Seg{//动态开点线段树 edu36 e
+	#define LC(x) tr[x].lc
+	#define RC(x) tr[x].rc
+	constexpr int L = 1, R = 1e9, minf = -2e9, N = 1.6e7;
+	struct tree{
+		int lc, rc;
+		int sum, tag = minf;
+	}tr[N];
+	int cnt = 1;
+	void add(int o, int l, int r, int x){
+		tr[o].sum = (r - l + 1) * x;
+		tr[o].tag = x;
+	}
+	void pushdown(int o, int l, int r){
+		if(!LC(o)) LC(o) = ++ cnt;
+		if(!RC(o)) RC(o) = ++ cnt;
+		if(tr[o].tag != minf){
+			int mid = (l + r) >> 1;
+			add(LC(o), l, mid, tr[o].tag);
+			add(RC(o), mid + 1, r, tr[o].tag);
+		}
+		tr[o].tag = minf;
+	}
+	void pushup(int o){
+		tr[o].sum = tr[LC(o)].sum + tr[RC(o)].sum;
+	}
+	void update(int lx, int rx, int x, int o = 1, int l = L, int r = R){
+		if(l >= lx && r <= rx){
+			add(o, l, r, x);
+			return;
+		}
+		pushdown(o, l, r);
+		int mid = (l + r) >> 1;
+		if(lx <= mid) update(lx, rx, x, LC(o), l, mid);
+		if(rx > mid) update(lx, rx, x, RC(o), mid + 1, r);
+		pushup(o);
+		return;
+	}
+	int query(int lx, int rx, int o = 1, int l = L, int r = R){
+		if(l >= lx && r <= rx) return tr[o].sum;
+		pushdown(o, l, r);
+		int mid = (l + r) >> 1;
+		if(rx <= mid) return query(lx, rx, LC(o), l, mid);
+		if(lx > mid) return query(lx, rx, RC(o), mid + 1, r);
+		return  query(lx, rx, LC(o), l, mid) + query(lx, rx, RC(o), mid + 1, r);
+	}
+};
+
+
+
+//
+namespace Seg{
+    #define LC(x) tr[x].lc
+    #define RC(x) tr[x].rc
+    #define _mov(x) tr[x].mov_tag
+    struct node{
+        ll poi[3], tag[3], tag2[3] = {1, 1, 1};// 加法标记与乘法标记
+        int lc, rc, mov_tag = 0;
+    };
+    constexpr static int N = 500e6/sizeof(struct node);// 500MB(尽可能拉满)
+    constexpr static int L = 1, R = 1e9;
+    constexpr static int mod = 1e9 + 7;
+    struct node tr[N];
+    ll cnt = 1;
+    void pushup(int o){
+        _rep(i, 0, 3) tr[o].poi[i] = tr[LC(o)].poi[i] + tr[RC(o)].poi[i] % mod;
+    }
+    void upd(int o, int l, int r, ll* a, ll* b, int _mv){// 更新信息
+        // 数值和标记都先旋转再乘后加
+        (_mov(o) += _mv) %= 3;
+        if(_mv){
+            int k = _mv;
+            k %= 3;
+            while(k --){// 旋转操作
+                swap(tr[o].tag[0], tr[o].tag[1]);
+                swap(tr[o].tag[1], tr[o].tag[2]);
+                swap(tr[o].tag2[0], tr[o].tag2[1]);
+                swap(tr[o].tag2[1], tr[o].tag2[2]);
+                swap(tr[o].poi[0], tr[o].poi[1]);
+                swap(tr[o].poi[1], tr[o].poi[2]);
+            }
+        }
+        if(b[0] != 1){
+            _rep(i, 0, 3) (tr[o].poi[i] *= b[i]) %= mod;
+            _rep(i, 0, 3) (tr[o].tag[i] *= b[i]) %= mod;
+            _rep(i, 0, 3) {
+                if(!tr[o].tag2[i]) tr[o].tag2[i] = b[i];
+                else (tr[o].tag2[i] *= b[i]) %= mod;
+            }
+        }
+        if(a[0]){
+            _rep(i, 0, 3) (tr[o].poi[i] += (a[i] * (r - l + 1) % mod)) %= mod;
+            _rep(i, 0, 3) (tr[o].tag[i] += a[i]) %= mod;
+        }   
+    }
+    void pushdown(int o, int l, int r){
+        if(!LC(o)) LC(o) = ++ cnt;
+        if(!RC(o)) RC(o) = ++ cnt;// 动态开点
+        int mid = (l + r) >> 1;
+        // 标记积累到子树
+        upd(LC(o), l, mid, tr[o].tag, tr[o].tag2, tr[o].mov_tag);
+        upd(RC(o), mid + 1, r, tr[o].tag, tr[o].tag2, tr[o].mov_tag);
+        // 该树标记清零
+        tr[o].mov_tag = 0;
+        _rep(i, 0, 3) tr[o].tag[i] = 0;
+        _rep(i, 0, 3) tr[o].tag2[i] = 1;//因为是乘法,所以置为1
+        return;
+    }
+    void add(int lx, int rx, ll* a, int o = 1, int l = L, int r = R){
+        if(lx > r || rx < l) return ;
+        if(l >= lx && r <= rx){
+            ll b[3] = {1, 1, 1};
+            upd(o, l, r, a, b, 0);
+            return;
+        }
+        int mid = (l + r) >> 1;
+        pushdown(o, l, r);
+        add(lx, rx, a, LC(o), l, mid);
+        add(lx, rx, a, RC(o), mid + 1, r);
+        pushup(o);
+        return;
+    }
+    void mul(int lx, int rx, ll* a, int o = 1, int l = L, int r = R){
+        if(lx > r || rx < l) return ;
+        if(l >= lx && r <= rx){
+            ll b[3] = {0, 0, 0};
+            upd(o, l, r, b, a, 0);
+            return;
+        }
+        int mid = (l + r) >> 1;
+        pushdown(o, l, r);
+        mul(lx, rx, a, LC(o), l, mid);
+        mul(lx, rx, a, RC(o), mid + 1, r);
+        pushup(o);
+        return;
+    }
+    void rotate(int lx, int rx, int o = 1, int l = L, int r = R){
+        if(lx > r || rx < l) return ;
+        if(l >= lx && r <= rx){
+            ll a[3] = {0, 0, 0};
+            ll b[3] = {1, 1, 1};
+            upd(o, l, r, a, b, 1);
+            return;
+        }
+        int mid = (l + r) >> 1;
+        pushdown(o, l, r);
+        rotate(lx, rx, LC(o), l, mid);
+        rotate(lx, rx, RC(o), mid + 1, r);
+        pushup(o);
+        return;
+    }
+    VL query(int lx, int rx, int o = 1, int l = L, int r = R){
+        if(l >= lx && r <= rx) {
+            VL res(3, 0);
+            _rep(i, 0, 3) res[i] = tr[o].poi[i];
+            return res;
+        }
+        int mid = (l + r) >> 1;
+        pushdown(o, l, r);
+        VL res(3, 0);
+        if(lx <= mid){
+            VL tmp = query(lx, rx, LC(o), l, mid);
+            _rep(i, 0, 3) res[i] += tmp[i];
+        }
+        if(rx > mid){
+            VL tmp = query(lx, rx, RC(o), mid + 1, r);
+            _rep(i, 0, 3) (res[i] += tmp[i]) %= mod;
+        }
+        return res;
+    }
+};
+
+
+
+// jls线段树
+namespace Seg{
+	#define lc (o << 1)
+	#define rc (o << 1 | 1)
+	struct node{
+		int tag1, tag2, tag3, tag4;// 最大值的加法标记,非最大值的加法标记,历史最大值的加法标记,非历史最大值的加法标记
+		int mx, _mx, se, cnt;// 区间最大值,区间历史最大值,区间次大值,区间最大值个数
+		ll sum;
+	};
+	constexpr static int inf = 2e9 + 10;
+	constexpr static int N = (((int)5e5) << 4);
+	constexpr int L = 1, R = 5e5 + 10;
+	struct node tr[N];
+	void pushup(int o){
+		tr[o].sum = tr[lc].sum + tr[rc].sum;
+		tr[o]._mx = max(tr[lc]._mx, tr[rc]._mx);
+		if(tr[lc].mx > tr[rc].mx){
+			tr[o].mx = tr[lc].mx;
+			tr[o].se = max(tr[lc].se, tr[rc].mx);
+			tr[o].cnt = tr[lc].cnt;
+		}
+		else if(tr[rc].mx > tr[lc].mx){
+			tr[o].mx = tr[rc].mx;
+			tr[o].se = max(tr[rc].se, tr[lc].mx);
+			tr[o].cnt = tr[rc].cnt;
+		}
+		else{
+			tr[o].mx = tr[lc].mx;
+			tr[o].se = max(tr[lc].se, tr[rc].se);
+			tr[o].cnt = tr[lc].cnt + tr[rc].cnt;
+		}
+	}
+	void upd(int o, int l, int r, int t1, int t2, int t3, int t4){
+		tr[o].sum += 1ll * tr[o].cnt * t1 + 1ll * t2 * (r - l + 1 - tr[o].cnt);// 最大值要加的数*最大值个数 + 非最大值要加的数 * 非最大值的个数		
+		// 历史最大值及标签的操作都取最值
+		// 一定要先更新历史最值标记,再更新值域标记
+		tr[o].tag3 = max(tr[o].tag3, tr[o].tag1 + t3);
+		tr[o].tag4 = max(tr[o].tag4, tr[o].tag2 + t4);
+		tr[o]._mx = max(tr[o]._mx, tr[o].mx + t3);
+		tr[o].mx += t1;
+		tr[o].tag1 += t1;
+		tr[o].tag2 += t2;
+		if(tr[o].se != -inf) tr[o].se += t2;	
+	}
+	void pushdown(int o, int l, int r){
+		int mmx = max(tr[lc].mx, tr[rc].mx);
+		int mid = (l + r) >> 1;
+		if(tr[lc].mx == mmx)// 如果区间最大值在左子树上, 则对左子树加上最大值标记,否则加非最大值标记
+			upd(lc, l, mid, tr[o].tag1, tr[o].tag2, tr[o].tag3, tr[o].tag4);
+		else upd(lc, l, mid, tr[o].tag2, tr[o].tag2, tr[o].tag4, tr[o].tag4);
+		if(tr[rc].mx == mmx)
+			upd(rc, mid + 1, r, tr[o].tag1, tr[o].tag2, tr[o].tag3, tr[o].tag4);
+		else upd(rc, mid + 1, r, tr[o].tag2, tr[o].tag2, tr[o].tag4, tr[o].tag4);
+		tr[o].tag1 = tr[o].tag2 = tr[o].tag3 = tr[o].tag4 = 0;
+	}
+	void build(int o = 1, int l = L, int r = R){
+		tr[o].tag1 = tr[o].tag2 = tr[o].tag3 = tr[o].tag4 = 0;
+		if(l == r){
+			tr[o].sum = tr[o].mx = tr[o]._mx = a[l];
+			tr[o].se = -inf;
+			tr[o].cnt = 1;
+			return ;
+		}
+		int mid = (l + r) >> 1;
+		build(lc, l, mid);
+		build(rc, mid + 1, r);
+		pushup(o);
+		return;
+	}
+	void add(int lx, int rx, int k, int o = 1, int l = L, int r = R){
+		if(rx < l || lx > r) return ;
+		if(l >= lx && r <= rx) {
+			upd(o, l, r, k, k, k, k);
+			return ;
+		}
+		int mid = (l + r) >> 1;
+		pushdown(o, l, r);
+		add(lx, rx, k, lc, l, mid);
+		add(lx, rx, k, rc, mid + 1, r);
+		pushup(o);
+		return ;
+	}
+	void tomin(int lx, int rx, int k, int o = 1, int l = L, int r = R){// 把区间取min变为对数值的加减
+		if(rx < l || lx > r || k >= tr[o].mx) return ;
+		if(l >= lx && r <= rx && k > tr[o].se) {
+			upd(o, l, r, k - tr[o].mx, 0, k - tr[o].mx, 0);
+			return ;
+		}
+		int mid = (l + r) >> 1;
+		pushdown(o, l, r);
+		tomin(lx, rx, k, lc, l, mid);
+		tomin(lx, rx, k, rc, mid + 1, r);
+		pushup(o);
+		return ;
+	}
+	int get_max(int lx, int rx, int o = 1, int l = L, int r = R){
+		if(rx < l || lx > r) return -inf;
+		if(l >= lx && r <= rx) return tr[o].mx;
+		int mid = (l + r) >> 1;
+		pushdown(o, l, r);
+		return max(get_max(lx, rx, lc, l, mid), get_max(lx, rx, rc, mid + 1, r));
+	}
+	int get_max2(int lx, int rx, int o = 1, int l = L, int r = R){
+		if(rx < l || lx > r) return -inf;
+		if(l >= lx && r <= rx) return tr[o]._mx;
+		int mid = (l + r) >> 1;
+		pushdown(o, l, r);
+		return max(get_max2(lx, rx, lc, l, mid), get_max2(lx, rx, rc, mid + 1, r));
+	}
+	ll query(int lx, int rx, int o = 1, int l = L, int r = R){
+		if(rx < l || lx > r) return 0;
+		if(l >= lx && r <= rx) return tr[o].sum;
+		int mid = (l + r) >> 1;
+		pushdown(o, l, r);
+		return query(lx, rx, lc, l, mid) + query(lx, rx, rc, mid + 1, r);
+	}
+	#undef lc
+	#undef rc
+};

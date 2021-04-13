@@ -1,3 +1,43 @@
+
+namespace Seg{// 洛谷模板题 子序列自动机， edu33 f
+	#define lc(x) tr[x].ls
+	#define rc(x) tr[x].rs
+	struct node{
+		int ls, rs, v;
+	};
+	constexpr static int N = (500e6) / sizeof(struct node);
+	constexpr static int L = 1, R = 1e5 + 7;
+	struct node tr[N];
+	ll cnt = 1;
+	void build(int o = 1, int l = L, int r = R){
+		tr[o].v = -1;
+		if(l == r) return;
+		lc(o) = ++ cnt;
+		rc(o) = ++ cnt;
+		int mid = (l + r) >> 1;
+		build(lc(o), l, mid);
+		build(rc(o), mid + 1, r);
+	}
+	int update(int pos, int v, int o, int l = L, int r = R){
+		int nw = ++ cnt;
+		lc(nw) = lc(o);
+		rc(nw) = rc(o);// 把旧子树拷到新子树上
+		if(l == r) {
+			tr[nw].v = v;
+			return nw; 
+		}
+		int mid = (l + r) >> 1;
+		if(pos <= mid) lc(nw) = update(pos, v, lc(nw), l, mid);
+		else rc(nw) = update(pos, v, rc(nw), mid + 1, r);
+		return nw; 
+	}
+	int query(int o, int pos, int l = L, int r = R){
+		if(l == r) return tr[o].v;
+		int mid = (l + r) >> 1;
+		if(pos <= mid) return query(lc(o), pos, l, mid);
+		return query(rc(o), pos, mid + 1, r);
+	}
+};
 #include<bits/stdc++.h>
 using namespace std;
 #define _rep(i, x, y) for(int i = (int)x; i < (int)y; ++i)
@@ -40,4 +80,25 @@ int query(int now, int old, int l, int r, int k){// 查找[l, r]区间第k小数
 	int mid = l + r >> 1;
 	if(k <= sum_left) return query(lson[now], lson[old], l, mid, k);
 	else return query(rson[now], rson[old], mid + 1, r, k - sum_left);
+}
+
+int update(int& now, int old, int l, int r, int pos, int v){
+	now = ++ id;
+	lson[now] = lson[old], rson[now] = rson[old];// 把旧版本拷到新版本上去
+	if(l == r) {
+		mi[now] = v;
+		return ;
+	}
+	int mid = (l + r) >> 1;
+	if(pos <= mid) update(lson[now], lson[old], l, mid, pos, v);// 应该更新的值域区间
+	else update(rson[now], rson[old], mid + 1, r, pos, v);
+	mi[now] = min(mi[lson[now]], mi[rson[now]]);
+	return now;
+}
+int query(int o, int l, int r, int lx, int rx){// 区间最小值
+	if(l >= lx && r <= rx) return mi[o];
+	int mid = (l + r) >> 1;
+	if(rx <= mid) return query(lson[o], l, mid, lx, rx);
+	if(lx > mid) return query(rson[o], mid + 1, r, lx, rx);
+	return min(query(lson[o], l, mid, lx, rx), query(rson[o], mid + 1, r, lx, rx));
 }
