@@ -1,3 +1,46 @@
+namespace SA{ // 板
+    #define _rep(i, x, y) for(int i = (int)x; i < (int)y; ++ i)
+    #define _dep(i, x, y) for(int i = (int)x; i > (int)y; -- i)
+    const int N = 3e5 + 10;
+    // sa[i] 为排名为i的后缀编号, rk[i]为后缀编号为i的后缀的排名, height[i]为排名i + 1与 i的最长公共前缀
+    int sa[N], rk[N], id[N], px[N], cnt[N], oldrk[N], height[N];
+    bool cmp(int x, int y, int w){
+        return oldrk[x] == oldrk[y] && oldrk[x + w] == oldrk[y + w];
+    }
+    void get_sa(string s){
+        int n = s.size();
+        s = "$" + s;
+        //'$'的字典序比'a'~'z'的字典序都小,用来做哨兵
+        int m = 300, p, i;// 值域 
+        _rep(i, 1, n + 1) ++ cnt[rk[i] = s[i]];
+        _rep(i, 1, m + 1) cnt[i] += cnt[i - 1];
+        _dep(i, n, 0) sa[cnt[rk[i]] --] = i;
+        for(int w = 1; w < n; w <<= 1, m = p){
+            for(p = 0, i = n; i > n - w; i --) id[++ p] = i;
+            _rep(i, 1, n + 1) if(sa[i] > w) id[++ p] = sa[i] - w;
+            memset(cnt, 0, sizeof cnt);
+            _rep(i, 1, n + 1) ++ cnt[px[i] = rk[id[i]]];
+            _rep(i, 1, m + 1) cnt[i] += cnt[i - 1];
+            _dep(i, n, 0) sa[cnt[px[i]] --] = id[i];
+            memcpy(oldrk, rk, sizeof rk);
+            p = 0;
+            _rep(i, 1, n + 1) rk[sa[i]] = cmp(sa[i], sa[i - 1], w) ? p : ++ p;
+        }
+    }
+    void get_height(string s){ // 先求出SA在求height
+        int n = s.size();
+        s = "$" + s;
+        int k = 0;
+        _rep(i, 1, n + 1){
+            int idx = rk[i];
+            if(idx == 1) continue;
+            int j = sa[idx - 1];
+            while(s[i + k] == s[j + k]) k ++;
+            height[idx] = k;
+            k = max(k - 1, 0);
+        }
+    }
+}
 //做法一 O(nlog²n)
 //做法二 使用Radix_Sort 或 count_sort 复杂度降至O(nlogn)
 #include <bits/stdc++.h>
