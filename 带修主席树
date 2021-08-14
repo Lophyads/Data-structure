@@ -1,5 +1,5 @@
 
-namespace Seg{ 洛谷P2617 Dynamic Rankings
+namespace Seg{ //洛谷P2617 Dynamic Rankings 先离散化再搞会更快
 	#define lc(x) tr[x].ls
 	#define rc(x) tr[x].rs
 	struct node{
