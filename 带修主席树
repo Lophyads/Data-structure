@@ -1,5 +1,5 @@
 
-namespace Seg{ //洛谷P2617 Dynamic Rankings 先离散化再搞会更快
+namespace Seg{ //洛谷P2617 动态区间k小值
 	#define lc(x) tr[x].ls
 	#define rc(x) tr[x].rs
 	struct node{
@@ -8,14 +8,25 @@ namespace Seg{ //洛谷P2617 Dynamic Rankings 先离散化再搞会更快
 	constexpr static int N = (500e6) / sizeof(struct node);
 	constexpr static int L = 1, R = 1e9 + 7;
 	struct node tr[N];
-	int update(int pos, int v, int nw, int l = L, int r = R){
+	int n, m;
+	ll cnt = 0;
+	constexpr int M = 1e5 + 10;
+	int rt[M], a[M], b1[M], b2[M], tag[N];
+	void pushup(int o){
+		tr[o].v = tr[lc(o)].v + tr[rc(o)].v;
+	}
+	int update(int pos, int v,int old, int nw, int l = L, int r = R){
 		if(!nw) nw = ++ cnt;	
-		assert(cnt < N);
-		tr[nw].v += v;
-		if(l == r) return nw;
+		if(l == r){
+			tr[nw].v += v;
+			 return nw;
+		}
 		int mid = (l + r) >> 1;
-		if(pos <= mid) lc(nw) = update(pos, v, lc(nw), l, mid);
-		else rc(nw) = update(pos, v, rc(nw), mid + 1, r);
+		if(pos <= mid) lc(nw) = update(pos, v,lc(old), lc(nw), l, mid);
+		else rc(nw) = update(pos, v, rc(old), rc(nw), mid + 1, r);
+		if(!lc(nw)) lc(nw) = lc(old);
+		if(!rc(nw)) rc(nw) = rc(old);
+		pushup(nw);
 		return nw; 
 	}
 	int query(int l, int r, int k){
@@ -43,36 +54,85 @@ namespace Seg{ //洛谷P2617 Dynamic Rankings 先离散化再搞会更快
 		return ll;
 	}
 	void change(int pos, int x, int v){
+		int lst = 0;
+		while(pos <= n) {		
+			update(x, v, lst, rt[pos]);
+			lst = rt[pos];
+			pos += (pos & (-pos));
+		}
+	}
+};
+namespace Seg{ // 动态求逆序对
+	#define lc(x) tr[x].ls
+	#define rc(x) tr[x].rs
+	struct node{
+		int ls, rs, v;
+	};
+	constexpr static int N = (500e6) / sizeof(struct node);
+	constexpr static int L = 1, R = 1e5 + 7;
+	constexpr int M = 1e5 + 10;
+	struct node tr[N];
+	int cnt = 0, n, m;
+	int rt[M], b1[M], b2[M], a[M];
+	int update(int pos, int v, int nw, int l = L, int r = R){
+		if(!nw) nw = ++ cnt;	
+		// assert(cnt < N);
+		tr[nw].v += v;
+		if(l == r) return nw;
+		int mid = (l + r) >> 1;
+		if(pos <= mid) lc(nw) = update(pos, v, lc(nw), l, mid);
+		else rc(nw) = update(pos, v, rc(nw), mid + 1, r);
+		return nw; 
+	}
+	ll query(int l, int r, int x, int op){
+		ll res = 0;
+		int t1 = 0, t2 = 0;
+		for(int i = l - 1; i; i &= (i - 1)) b1[t1++] = rt[i];
+		for(int i = r; i; i &= (i - 1)) b2[t2++] = rt[i];
+		int ll = 1, rr = R;	
+		while(ll < rr){
+			int mid = (ll + rr) >> 1;
+			if(x <= mid){
+				rr = mid;
+				if(op == 1){
+					_rep(i, 0, t1) res -= tr[rc(b1[i])].v;
+					_rep(i, 0, t2) res += tr[rc(b2[i])].v;
+				}
+				for(int i = 0; i < t1; i ++) b1[i] = lc(b1[i]);
+				for(int i = 0; i < t2; i ++) b2[i] = lc(b2[i]);
+			}
+			else{
+				ll = mid + 1;
+				if(op == -1){
+					_rep(i, 0, t1) res -= tr[lc(b1[i])].v;
+					_rep(i, 0, t2) res += tr[lc(b2[i])].v;
+				}
+				for(int i = 0; i < t1; i ++) b1[i] = rc(b1[i]);
+				for(int i = 0; i < t2; i ++) b2[i] = rc(b2[i]);
+			}
+		}
+		return res;
+	}
+	void change(int pos, int x, int v){
 		while(pos <= n) {
 			update(x, v, rt[pos]);
 			pos += (pos & (-pos));
 		}
 	}
 };
-using namespace Seg;
-int main(){
-	ios::sync_with_stdio(false); cin.tie(nullptr), cout.tie(nullptr);
-	cin >> n >> m;
-	_rep(i, 1, n + 1) rt[i] = ++ cnt;
-	_rep(i, 1, n + 1) {
+	_rep(i, 1, n + 1){
 		cin >> a[i];
-		change(i, a[i], 1);
+		ans += qur(n + 1 - a[i]);
+		add(n + 1 - a[i]);
+		change(i, n + 1 - a[i], 1);
+		pos[n + 1 - a[i]] = i;
 	}
 	_rep(i, 0, m){
-		char op;
-		cin >> op;
-		if(op == 'Q'){
-			int l, r, k;
-			cin >> l >> r >> k;
-			cout << query(l, r, k) << "\n";
-		}
-		else{
-			int pos, v;
-			cin >> pos >> v;
-			change(pos, a[pos], -1);
-			a[pos] = v;
-			change(pos, a[pos], 1);
-		}
+		int x;
+		cin >> x;
+		x = n + 1 - x;
+		cout << ans << "\n";
+		ans -= query(1, pos[x] - 1, x, -1); 
+		ans -= query(pos[x] + 1, n, x, 1);
+		change(pos[x], x, -1);
 	}
-	return 0;
-} 
