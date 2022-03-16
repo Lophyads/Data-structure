@@ -1,0 +1,59 @@
+namespace Seg{
+	#define lc(x) tr[x].ls
+	#define rc(x) tr[x].rs
+	struct node{
+		int ls, rs, mi, tag;
+	};
+	constexpr static int N = (500e6) / sizeof(struct node);
+	int L = 1, R = 1e5 + 7;
+	struct node tr[N];
+	int tot = 0;
+	int new_node(int l, int r){
+		int nw = ++ tot;
+		if(r - l + 1 >= n){
+			tr[nw].mi = st.get_mi(0, n - 1);
+		}	
+		else{
+			l %= n, r %= n;
+			if(l <= r) tr[nw].mi = st.get_mi(l, r);
+			else tr[nw].mi = min(st.get_mi(0, r), st.get_mi(l, n - 1));
+		}
+		return nw;
+	}
+	void upd(int o, int v){
+		tr[o].mi = v;
+		tr[o].tag = v;
+	}
+	void pushdown(int o, int l, int r){
+		int mid = (l + r) >> 1;
+		if(!lc(o)) lc(o) = new_node(l, mid);
+		if(!rc(o)) rc(o) = new_node(mid + 1, r);
+		if(!tr[o].tag) return ;
+		upd(lc(o), tr[o].tag);
+		upd(rc(o), tr[o].tag);
+		tr[o].tag = 0;
+		return;
+	}
+	void pushup(int o){
+		tr[o].mi = min(tr[lc(o)].mi, tr[rc(o)].mi);
+	}
+	void update(int s, int e, int v, int o = 1, int l = L, int r = R){
+		 if(l >= s && r <= e){
+        	upd(o, v);
+           	return ;
+        }
+        pushdown(o, l, r);
+        int mid = (l + r) >> 1;
+        if(s <= mid) update(s, e, v, lc(o), l, mid);
+        if(e > mid) update(s, e, v, rc(o), mid + 1, r);
+        pushup(o);
+	}
+	int query(int s, int e, int o = 1, int l = L, int r = R){
+        if(l >= s && r <= e) return tr[o].mi;     
+        int mid = (l + r) >> 1;
+        pushdown(o, l, r);
+        if(e <= mid) return query(s, e, lc(o), l, mid);
+        if(s > mid)  return query(s, e, rc(o), mid + 1, r);
+        return min(query(s, e, lc(o), l, mid), query(s, e, rc(o), mid + 1, r));
+    }
+};

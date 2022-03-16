@@ -1,0 +1,97 @@
+int sz;
+struct node{
+	int l, r, id;
+	bool operator < (const node& rhs) const{// 奇偶优化
+		if(l / sz != rhs.l / sz) return l / sz < rhs.l / sz;
+		if((l / sz) & 1) return r < rhs.r;
+		else return r > rhs.r;
+	}
+}qs[N];
+void update(int x, int v){
+	int num = a[x];
+	if(v == 1){
+		++ cnt[num];
+		if(cnt[num] == 1) q.push(num);
+		//else if(cnt[num] == 2) seen.erase(num);	
+	}
+	else{
+		-- cnt[num];
+		if(cnt[num] == 1) q.push(num);
+		//if(!cnt[num]) seen.erase(num);
+	}
+}
+
+
+
+
+int cnt[N];
+int co[N];
+int sz;
+struct q{
+	int l, r, idx, time;
+	q(int a = 0, int b = 0, int c = 0, int d = 0) : l(a), r(b), idx(c), time(d){}
+	bool operator < (const struct q rhs){
+		if(l / sz == rhs.l / sz){
+			if(r / sz == rhs.r / sz) return time < rhs.time;
+			return r / sz < rhs.r / sz; 
+		}
+		return l / sz < rhs.l / sz;
+	}  
+}qs[N];
+struct u{
+	int pos, col;
+	u(int a = 0, int b = 0) : pos(a), col(b){}
+}upd[N];
+int ans = 0;
+void update(int x, int v){
+	cnt[co[x]] += v;
+	if(v == 1 && cnt[co[x]] == 1) ans ++;
+	if(v == -1 && cnt[co[x]] == 0) ans --;
+} 
+int cl = 1, cr = 0, now = 0;// 当前维护区间以及修改操作的时间点 
+void modify(int x){
+	if(upd[x].pos >= cl && upd[x].pos <= cr){
+		if(++cnt[upd[x].col] == 1) ans++;
+		if(--cnt[co[upd[x].pos]] == 0) ans--;
+	}
+	swap(upd[x].col, co[upd[x].pos]);// 下次操作必是回退操作 
+}
+int res[N];
+namespace SOLVE{
+	void main(){		
+		int n, m;
+		n = rd(), m = rd();
+		for(int i = 1; i <= n; i ++) co[i] = rd();
+		int ti = 0;// 修改次数 
+		int qc = 0;	
+		char op[10];	
+		for(int i = 0; i < m; i ++){
+			scanf("%s", &op);
+			if(op[0] == 'Q'){				
+				int l, r;
+				++qc;
+				l = rd(), r = rd();
+				qs[qc] = q(l, r, qc, ti);								
+			}
+			else{
+				int pos, col;
+				pos = rd(), col = rd();
+				++ ti;
+				upd[ti] = u(pos, col);
+			}
+		}
+		sz = pow(n, 0.66666);// 有点假,q很大时最好使用sqrt
+		sort(qs + 1, qs + qc + 1);
+		for(int i = 1; i <= qc; i ++){
+			int l = qs[i].l, r = qs[i].r, idx = qs[i].idx, t = qs[i].time;
+			while(cr < r) update(++cr, 1);
+			while(cr > r) update(cr--, -1);
+			while(cl < l) update(cl++, -1);
+			while(cl > l) update(--cl, 1);
+			while(now < t) modify(++now);
+			while(now > t) modify(now--);
+			res[idx] = ans;
+		}
+		for(int i = 1; i <= qc; i ++) printf("%lld\n", res[i]);
+	}	
+};

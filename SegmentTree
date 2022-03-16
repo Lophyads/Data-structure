@@ -84,76 +84,77 @@ namespace Seg{
     }
 };
 //
-struct SegmentTree{
-	#define LC (id << 1)
-	#define RC (id << 1 | 1)
+struct Seg{
+	#define lc (o << 1)
+	#define rc (o << 1 | 1)
 	int n;
-	vector<ll> tag, sum;
-	SegmentTree(int n) : n(n), tag(n << 2), sum(n << 2) {}
-	SegmentTree(const VI& a){
+	vector<int> tag;
+	vector<ll> sum;
+	Seg(int n) : n(n), tag(n << 2), sum(n << 2) {}
+	Seg(const vector<int>& a){
 		n = a.size();
 		tag.resize(n << 2);
 		sum.resize(n << 2);
-		function<void(int, int, int)> build = [&](int id, int l, int r){
-			if(r - l == 1){
-				sum[id] = a[l];
+		auto build = [&](auto&& self, int o, int l, int r) -> void{
+ 			if(l == r){
+				sum[o] = a[l];
 				return;
 			}
 			int mid = (l + r) >> 1;
-			build(LC, l, mid);
-			build(RC, mid, r);
-			pushup(id);
+			self(self, lc, l, mid);
+			self(self, rc, mid + 1, r);
+			pushup(o);
 		};
-		build(1, 0, n);
+		build(build, 1, 0, n - 1);
 	}
-	void pushup(int id){
-		sum[id] = sum[LC] + sum[RC];
+	void pushup(int o){
+		sum[o] = sum[lc] + sum[rc];
 	}
-	void add(int id, int l, int r, ll v){
-		tag[id] += v;
-		sum[id] += (r - l) * v;
+	void upd(int o, int l, int r, int v){
+		tag[o] = v;
+		sum[o] += (r - l + 1) * v;
 	}
-	void pushdown(int id, int l, int r){
-		if(!tag[id]) return;
+	void pushdown(int o, int l, int r){
+		if(!tag[o]) return;
 		int mid = (l + r) >> 1;
-		add(LC, l, mid, tag[id]);
-		add(RC, mid, r, tag[id]);
-		tag[id] = 0;
+		upd(lc, l, mid, tag[o]);
+		upd(rc, mid + 1, r, tag[o]);
+		tag[o] = 0;
 	}
-	void update(int id, int l, int r, int s, int e, ll v){
-		if(r <= s || l >= e) return;
+	void update(int o, int l, int r, int s, int e, int v){
 		if(l >= s && r <= e){
-			add(id, l, r, v);
+			upd(o, l, r, v);
 			return;
 		}
-		pushdown(id, l, r);
+		pushdown(o, l, r);
 		int mid = (l + r) >> 1;
-		update(LC, l, mid, s, e, v);
-		update(RC, mid, r, s, e, v);
-		pushup(id);
+		if(s <= mid) update(lc, l, mid, s, e, v);
+		if(e > mid) update(rc, mid + 1, r, s, e, v);
+		pushup(o);
 	}
-	void update(int l, int r, ll v){
-		update(1, 0, n, l, r, v);
+	void update(int l, int r, int v){
+		update(1, 0, n - 1, l, r, v);
 	}
-	ll query(int id, int l, int r, int pos){
-		if(r - l == 1) return sum[id];
-		pushdown(id, l, r);
+	int query(int o, int l, int r, int pos){
+		if(l == r) return sum[o];
+		pushdown(o, l, r);
 		int mid = (l + r) >> 1;
-		if(pos <= mid) return query(LC, l, mid, pos);
-		return query(RC, mid, r, pos);
+		if(pos <= mid) return query(lc, l, mid, pos);
+		return query(rc, mid + 1, r, pos);
 	}
-	ll query(int id, int l, int r, int s, int e){
-		if(r <= s || l >= e) return 0;
-		if(l >= s && r <= e) return sum[id];
+	int query(int o, int l, int r, int s, int e){
+		if(l >= s && r <= e) return sum[o];
 		int mid = (l + r) >> 1;
-		pushdown(id, l, r);
-		return query(LC, l, mid, s, e) + query(RC, mid, r, s, e);
+		pushdown(o, l, r);
+		if(e <= mid) return query(lc, l, mid, s, e);
+		if(s > mid) return query(rc, mid + 1, r, s, e);
+		return query(lc, l, mid, s, e) + query(rc, mid + 1, r, s, e);
 	}
-	ll query(int l, int r){
-		return query(1, 0, n, l, r);
+	int query(int l, int r){
+		return query(1, 0, n - 1, l, r);
 	}
-	ll query(int x){
-		return query(1, 0, n, x);
+	int query(int x){
+		return query(1, 0, n - 1, x);
 	}
 };
 void Pushup(int id){
@@ -605,3 +606,57 @@ namespace Seg{
 	#undef lc
 	#undef rc
 };
+// 二维线段树
+constexpr int N = 2e3 + 48; // 卡空间
+namespace Seg{
+	int D, S, n;
+	#define lc (o << 1)
+	#define rc (o << 1 | 1)
+	struct segy{
+		int mx[N], tag[N];
+		void update(int s, int e, int v, int o = 1, int l = 0, int r = S){
+			mx[o] = max(mx[o], v);
+			if(l == s && r == e){ // 区间完全覆盖待修区间才打标记
+				tag[o] = max(tag[o], v);
+				return ;
+			}
+			int mid = (l + r) >> 1;
+			if(e <= mid) return update(s, e, v, lc, l, mid);
+			if(s > mid) return update(s, e, v, rc, mid + 1, r);
+			update(s, mid, v, lc, l, mid);
+			update(mid + 1, e, v, rc, mid + 1, r);
+		}
+		int query(int s, int e, int o = 1, int l = 0, int r = S){
+			if(s == l && r == e) return mx[o];
+			int mid = (l + r) >> 1;
+			int ans = tag[o]; // 用标记更新答案
+			if(e <= mid) return max(ans, query(s, e, lc, l, mid));
+			if(s > mid) return max(ans, query(s, e, rc, mid + 1, r));
+			return max({ans, query(s, mid, lc, l, mid), query(mid + 1, e, rc, mid + 1, r)});
+		}
+	};
+	struct segx{
+		segy mx[N], tag[N];
+		void update(int s, int e, int ll, int rr, int v, int o = 1, int l = 0, int r = D){
+			mx[o].update(ll, rr, v);
+			if(s == l && e == r){
+				tag[o].update(ll, rr, v);
+				return ;
+			}
+			int mid = (l + r) >> 1;
+			if(e <= mid) return update(s, e, ll, rr, v, lc, l, mid);
+			if(s > mid) return update(s, e, ll, rr, v, rc, mid + 1, r);
+			update(s, mid, ll, rr, v, lc, l, mid);
+			update(mid + 1, e, ll, rr, v, rc, mid + 1, r);
+		}
+		int query(int s, int e, int ll, int rr, int o = 1, int l = 0, int r = D){
+			if(l == s && e == r) return mx[o].query(ll, rr);
+			int mid = (l + r) >> 1;
+			int ans = tag[o].query(ll, rr);
+			if(e <= mid) return max(ans, query(s, e, ll, rr, lc, l, mid));
+			if(s > mid) return max(ans, query(s, e, ll, rr, rc, mid + 1, r));
+			return max({ans, query(s, mid, ll, rr, lc, l, mid), query(mid + 1, e, ll, rr, rc, mid + 1, r)});
+		}
+	}tr;
+}
+using namespace Seg;
