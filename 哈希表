@@ -1,0 +1,30 @@
+const int maxn=30*3e5+10,INF=0x3f3f3f3f,MAXN=3e5+10;
+struct Hash {
+    int Head[maxn],mod,tot,Next[maxn],cnt[maxn],val[maxn];
+    void init() {
+        memset(Head,-1,sizeof(Head));
+        memset(cnt,0,sizeof(cnt));
+        mod=maxn;
+        tot=0;
+    }
+    void add(int x) {
+        int idx=x%mod;
+        for (int i=Head[idx]; i != -1; i=Next[i]) {
+            if (val[i]==x) {
+                cnt[i]+=1;
+                return;
+            }
+        }
+        Next[tot]=Head[idx];
+        cnt[tot]=1;
+        val[tot]=x;
+        Head[idx]=tot++;
+    }
+    int query(int x) {
+        int idx=x%mod;
+        for (int i=Head[idx]; i != -1; i=Next[i]) {
+            if (val[i]==x) return cnt[i];
+        }
+        return 0;
+    }
+};

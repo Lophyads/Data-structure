@@ -1,0 +1,168 @@
+namespace Splay{
+	const int N = 1e5 + 10;
+	#define lc(x) (tr[x][0])
+	#define rc(x) (tr[x][1])
+	#define get(x) (tr[fa[x]][1] == x)
+	int tr[N][2], sz[N], cnt[N], val[N], fa[N], rev[N];
+	int tot = 0, rt;
+	int a[N];
+	inline void clean(int x){lc(x) = rc(x) = sz[x] = cnt[x] = val[x] = fa[x] = rev[x] = 0;}
+	inline void pushup(int x){sz[x] = sz[lc(x)] + sz[rc(x)] + cnt[x];}
+	inline void pushdown(int x){
+		if(rev[x]){
+			swap(lc(lc(x)), rc(lc(x)));
+			swap(lc(rc(x)), rc(rc(x)));
+			rev[lc(x)] ^= 1, rev[rc(x)] ^= 1;
+			rev[x] = 0;
+		}
+	}
+	inline void rotate(int x){
+		int y = fa[x], z = fa[y];
+		pushdown(y), pushdown(x);
+		int k = get(x);
+		tr[y][k] = tr[x][!k];
+		fa[tr[x][!k]] = y;
+		fa[x] = z;
+		if(z) tr[z][get(y)] = x;
+		tr[x][!k] = y;
+		fa[y] = x;
+		pushup(y), pushup(x);
+	}
+	inline void splay(int x, int g = 0){
+		for(int y; (y = fa[x]) != g; rotate(x))
+			if(fa[y] != g) rotate((get(y) == get(x)) ? y : x);
+		if(!g) rt = x;
+	}
+	inline int insert(int v){
+		if(!rt){
+			rt = ++ tot;
+			val[rt] = v;
+			sz[rt] = cnt[rt] = 1;
+			lc(rt) = rc(rt) = fa[rt] = rev[rt] = 0;
+			return rt;
+		}
+		int cur = rt, p = 0;
+		while(cur){
+			if(val[cur] == v){
+				++ cnt[cur];
+				pushup(cur);
+				pushup(p);
+				splay(cur);
+				return cur;
+			}
+			p = cur;
+			cur = tr[cur][v > val[cur]];
+			if(!cur){
+				cur = ++ tot;
+				val[cur] = v;
+				sz[cur] = cnt[cur] = 1;
+				lc(cur) = rc(cur) = rev[cur] = 0;
+				fa[cur] = p;
+				tr[p][v > val[p]] = cur;
+				pushup(p);
+				splay(cur);
+				return cur;
+			}
+		}
+	}
+	inline int kth(int k, int op = 0){// 序列中第k个数的位置
+		int x = rt;
+		while(x){
+			pushdown(x);
+			if(sz[lc(x)] + cnt[x] < k) {
+				k -= (sz[lc(x)] + cnt[x]);
+				x = rc(x);
+			}
+			else if(sz[lc(x)] >= k) x = lc(x);
+			else {
+				if(!op) splay(x);
+				return x;
+			}
+		}
+		return -1;
+	}
+	inline int rk(int x){ // x的排名
+		int cur = rt;
+		int ans = 0;
+		while(cur){
+			// pushdown(x);
+			if(val[cur] == x) {
+				splay(cur);
+				return ans + sz[lc(cur)] + 1;
+			}
+			else if(val[cur] < x){
+				ans += cnt[cur] + sz[lc(cur)];
+				cur = rc(cur);
+			}
+			else cur = lc(cur);
+		}
+		return -1;
+	}
+	inline int get_pre(){
+		pushdown(rt);
+		int x = lc(rt);
+		pushdown(x);
+		while(rc(x)) {
+			x = rc(x);
+			pushdown(x);
+		}
+		if(x) splay(x);
+		return x;
+	}
+	inline int get_suf(){
+		pushdown(rt);
+		int x = rc(rt);
+		pushdown(x);
+		while(lc(x)){
+			 x = lc(x);
+			 pushdown(x);
+		}
+		if(x) splay(x);
+		return x;
+	}
+	inline void del(int v){
+		rk(v);
+		if(cnt[rt] > 1){
+			-- cnt[rt];
+			pushup(rt);
+			return ;
+		}
+		else if(!lc(rt) && !rc(rt)) clean(rt), rt = 0;
+		else if(!lc(rt) || !rc(rt)){
+			int x = rt;
+			int k = (rc(rt) ? 1 : 0);
+			rt = tr[x][k], fa[rt] = 0;
+			clean(x);
+		}
+		else{
+			int x = rt;
+			get_pre();
+			fa[rc(x)] = rt, rc(rt) = rc(x);
+			clean(x);
+			pushup(rt);
+		}
+	}
+	inline void reverse(int l, int r){
+		l = kth(l - 1, 1), r = kth(r + 1, 1);
+		splay(l), splay(r, l);
+		rev[lc(r)] ^= 1;
+		swap(lc(lc(r)), rc(lc(r)));
+	}
+	inline int build(int l, int r, int f){
+		if(l > r) return 0;
+		int mid = (l + r) >> 1;
+		int x = ++ tot;
+		val[x] = a[mid], rev[x] = 0, cnt[x] = 1, fa[x] = f;
+		lc(x) = build(l, mid - 1, x);
+		rc(x) = build(mid + 1, r, x);
+		pushup(x);
+		return x;
+	}
+	inline void print(int x){ // 中序遍历输出
+		if(!x) return ;
+		pushdown(x);
+		print(lc(x));
+		printf("%d ", val[x]);
+		print(rc(x));
+	}
+}

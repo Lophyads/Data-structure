@@ -3,7 +3,7 @@ namespace Seg{
     const int mod = 998244353;
     int a[N];
     struct node{
-        ll sum1, sum2, tag;
+        ll sum, tag;
     }tr[N << 2];
     #define lc (o << 1)
     #define rc (o << 1 | 1)
@@ -17,36 +17,31 @@ namespace Seg{
         return x * y % mod;
     }
     void pushup(int o){
-        tr[o].sum1 = add(tr[lc].sum1, tr[rc].sum1);
-        tr[o].sum2 = add(tr[lc].sum2, tr[rc].sum2);
+        tr[o].sum = add(tr[lc].sum, tr[rc].sum);
     }
-    void build(int l, int r, int o = 1){
+    void build(int o = 1, int l = L, int r = R){
+		tr[o].sum = tr[o].tag = 0;
         if(l == r){
-            int k = __lg(a[l]);
-            tr[o].sum1 = 1 << k;
-            tr[o].sum2 = a[l] - tr[o].sum1;
+			tr[o].sum = a[l];
             tr[o].tag = 1;
             return ;
         }
-        tr[o].sum1 = tr[o].sum2 = 0;
-        tr[o].tag = 1;
         int mid = (l + r) >> 1;
-        build(l, mid, lc);
-        build(mid + 1, r, rc);
+        build(lc, l, mid);
+        build(rc, mid + 1, r);
         pushup(o);
     }
     void upd(int o, ll v){
         (tr[o].tag *= v) %= mod;
-        (tr[o].sum1 *= v) %= mod;
+        (tr[o].sum *= v) %= mod;
     }
     void pushdown(int o){
-        if(tr[o].tag == 1) return ;
+        if(tr[o].tag == 0) return ;
         upd(lc, tr[o].tag);
         upd(rc, tr[o].tag);
-        tr[o].tag = 1;
+        tr[o].tag = 0;
     }
     void update(int s, int e, ll v, int o = 1, int l = L, int r = R){
-        if(!tr[o].sum1) return ;
         if(l >= s && r <= e){
             upd(o, v);
             return;
@@ -57,25 +52,8 @@ namespace Seg{
         if(e > mid) update(s, e, v, rc, mid + 1, r);
         pushup(o);
     }
-    void modify(int s, int e, int o = 1, int l = L, int r = R){
-        if(!tr[o].sum1) return ;
-        if(l == r) {
-            if(!tr[o].sum2){
-                tr[o].sum1 = 0;
-                return ;
-               }
-            tr[o].sum2 -= (tr[o].sum2 & (-tr[o].sum2));
-            return ;
-        }
-        int mid = (l + r) >> 1;
-        pushdown(o);
-        if(s <= mid) modify(s, e, lc, l, mid);
-        if(e > mid) modify(s, e, rc, mid + 1, r);
-        pushup(o);
-    }
     ll query(int s, int e, int o = 1, int l = L, int r = R){
-        if(!tr[o].sum1) return 0;
-        if(l >= s && r <= e) return (tr[o].sum1 + tr[o].sum2) % mod;
+        if(l >= s && r <= e) return tr[o].sum;
         int mid = (l + r) >> 1;
         pushdown(o);
         if(e <= mid) return query(s, e, lc, l, mid);
