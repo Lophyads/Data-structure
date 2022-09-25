@@ -1,18 +1,38 @@
 namespace LCT{
-	const int maxn = 1e5 + 10;
-	int tr[maxn][2], fa[maxn], tag[maxn];
-	int sum[maxn], v[maxn], stk[maxn];
+	using ll = long long;
+	const int maxn = 2e5 + 10;
+	const int mod = 51061;
+	int tr[maxn][2], fa[maxn], sz[maxn], rev[maxn];
+	ll sum[maxn], val[maxn], ad[maxn], mul[maxn];
 	#define get(x) (tr[fa[x]][1] == x)
 	#define isroot(x) (tr[fa[x]][0] != x && tr[fa[x]][1] != x)
-	
-	inline void pushup(int x){ sum[x] = sum[tr[x][0]] ^ sum[tr[x][1]] ^ v[x];}
-	inline void pushdown(int x){
-		if(tag[x]){
-			tag[tr[x][0]] ^= 1, tag[tr[x][1]] ^= 1;
-			swap(tr[tr[x][0]][0], tr[tr[x][0]][1]);
-			swap(tr[tr[x][1]][0], tr[tr[x][1]][1]);
-			tag[x] = 0;
+	#define lc(x) (tr[x][0])
+	#define rc(x) (tr[x][1])
+	inline void pushup(int x){ 
+		sum[x] = (sum[lc(x)] + sum[rc(x)] + val[x]) % mod;
+		sz[x] = sz[lc(x)] + sz[rc(x)] + 1;
+	}
+	inline void upd(int x, int v1, int v2, int v3){
+		if(v1) {
+			swap(lc(x), rc(x));
+			rev[x] ^= 1;
 		}
+		if(v2 != 1){
+			(mul[x] *= v2) %= mod;
+			(ad[x] *= v2) %= mod;
+			(sum[x] *= v2) %= mod;
+			(val[x] *= v2) %= mod;
+		}
+		if(v3){
+			(ad[x] += v3) %= mod;
+			(sum[x] += 1ll * v3 * sz[x]) %= mod;
+			(val[x] += v3) %= mod;
+		}
+	}
+	inline void pushdown(int x){
+		upd(lc(x), rev[x], mul[x], ad[x]);
+		upd(rc(x), rev[x], mul[x], ad[x]);
+		rev[x] = 0, mul[x] = 1, ad[x] = 0;
 	}
 	inline void rotate(int x){
 		int y = fa[x], z = fa[y], k = get(x);
@@ -34,19 +54,19 @@ namespace LCT{
 		int p;
 		for(p = 0; x; p = x, x = fa[x]){
 			splay(x);
-			tr[x][1] = p;
+			rc(x) = p;
 			pushup(x);
 		}
 		return p;
 	}
 	inline void makeroot(int x){ // 使x成为原树的根
 		x = access(x);
-		tag[x] ^= 1;
-		swap(tr[x][0], tr[x][1]);
+		rev[x] ^= 1;
+		swap(lc(x), rc(x));
 	}
 	inline int findroot(int x){ // 查找x所在原树的根
 		access(x), splay(x);
-		while(tr[x][0]) pushdown(x), x = tr[x][0];
+		while(lc(x)) pushdown(x), x = lc(x);
 		splay(x);
 		return x;
 	}
@@ -56,8 +76,8 @@ namespace LCT{
 	}
 	inline void cut(int x, int y){ 
 		makeroot(x);
-		if(findroot(y) == x && fa[y] == x && !tr[y][0]){
-			tr[x][1] = fa[y] = 0;
+		if(findroot(y) == x && fa[y] == x && !lc(y)){
+			rc(x) = fa[y] = 0;
 			pushup(x);
 		}
 	}
