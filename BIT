@@ -34,7 +34,7 @@ ll range_query(int l, int r){
 // 区间修改 + 区间查询
 void update(int x, int v){//单点修改
 	for(int i = x; i < N; i += (i & (-i)))
-		sum1[i] += v; sum2[i] += x * v;
+		sum1[i] += v, sum2[i] += x * v;
 }
 void range_change(int l, int r, int v){//区间修改
 	update(l, v);

@@ -1,0 +1,36 @@
+struct node{
+	ll ls, rs, s, sum;
+	node(){ls = rs = s = -1e9;}
+}tr[maxn << 2];
+N = 1;
+while(N <= n + 1) N <<= 1;
+int a[maxn];
+int N, n, m, k;
+inline node pushup(const node& lhs, const node& rhs){
+	node res;
+	res.s = max({lhs.s, rhs.s, lhs.rs + rhs.ls});
+	res.sum = lhs.sum + rhs.sum;
+	res.ls = lhs.ls, res.rs = rhs.rs;
+	res.ls = max(lhs.ls, lhs.sum + rhs.ls);
+	res.rs = max(res.rs, lhs.rs + rhs.sum);
+	return res;
+}
+inline void build(){
+	for(int i = 1; i <= n; ++ i){
+		tr[i + N].ls = tr[i + N].rs = tr[i + N].s = tr[i + N].sum = a[i];
+	}
+	for(int i = N; i; -- i) {
+		tr[i] = pushup(tr[i << 1], tr[i << 1 | 1]);
+	}
+}
+inline ll query(int l, int r){
+	if(l > r) return 0;
+	node ansl, ansr, ans;
+	for(l += N - 1, r += N + 1; l ^ r ^ 1; l >>= 1, r >>= 1){
+		if(~l & 1) ansl = pushup(ansl, tr[l ^ 1]);
+		if(r & 1) ansr = pushup(tr[r ^ 1], ansr);
+	}
+	ans = pushup(ansl, ansr);
+	return ans.s;
+}
+

@@ -1,0 +1,23 @@
+	int merge(int x, int y){ // 线段树合并
+		if(!x || !y) return x | y;
+		int o = ++ tot;
+		lc(o) = merge(lc(x), lc(y));
+		rc(o) = merge(rc(x), rc(y));
+		tr[o].sum = tr[x].sum + tr[y].sum;
+		return o;
+	}
+	void split(int& x, int& y, int s, int e, int l = L, int r = R){ // 线段树分裂
+		if(!x || l > e || s > r) return;
+		if(l >= s && r <= e){
+			y = x;
+			x = 0; // 断边
+			return ;
+		}
+		int mid = (l + r) >> 1;
+		if(!y) y = new_node();
+		split(lc(x), lc(y), s, e, l, mid);
+		split(rc(x), rc(y), s, e, mid + 1, r);
+		pushup(x);
+		pushup(y);
+		return ;
+	}

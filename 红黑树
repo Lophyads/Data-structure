@@ -1,0 +1,214 @@
+const int N = 1.5e6 + 10;
+const int KINF = (1ll << 31) - 1;
+struct node{
+	int v, sz, cnt, col, fa, ch[2];
+}tr[N];
+#define ch(x, y) (tr[x].ch[y])
+int stk[N], top = 0, tot = 0;
+int rt = 0;
+// 0: 黑 1: 红
+inline int newnode(int v){
+	int o = top ? stk[top --] : ++ tot;
+	tr[o] = (node){v, 1, 1, 1, 0, 0, 0};
+	return o;
+}
+inline void pushup(int o){
+	tr[o].sz = tr[ch(o, 0)].sz + tr[ch(o, 1)].sz + tr[o].cnt;
+}
+inline void update(int o){
+	while(o){
+		tr[o].sz --;
+		o = tr[o].fa;
+	}
+}
+inline int get(int o){return ch(tr[o].fa, 1) == o;}
+inline void rotate(int o, int d){// o: 子树根节点, d: 0(左旋), 1(右旋)
+	int o1 = ch(o, !d);
+	tr[o1].fa = tr[o].fa;
+	if(tr[o].fa) ch(tr[o].fa, get(o)) = o1;
+	else rt = o1;
+	ch(o, !d) = ch(o1, d);
+	if(ch(o1, d)) tr[ch(o1, d)].fa = o;
+	ch(o1, d) = o;
+	tr[o].fa = o1;
+	pushup(o);
+	pushup(o1);
+}
+inline int pre(int v){ // 前驱
+	int res = -KINF;
+	int o = rt;
+	while(o){
+		if(tr[o].v < v) res = tr[o].v;
+		o = ch(o, tr[o].v < v);
+	}
+	return res;
+}
+inline int suf(int v){ // 后继
+	int res = KINF;
+	int o = rt;
+	while(o){
+		if(tr[o].v > v) res = tr[o].v;
+		o = ch(o, !(tr[o].v > v));
+	}
+	return res;
+}
+inline void ins_fix(int o){
+	while(o != rt && tr[tr[o].fa].col){
+		int f = tr[o].fa;
+		int gf = tr[f].fa;
+		int d = get(f);
+		int bro = ch(gf, !d);
+		if(!tr[bro].col){ // 兄弟为黑色
+			if(get(o) != d){ // 讲父亲节点和当前节点调整为链
+				rotate(f, d);
+				o = f;
+			}
+			f = tr[o].fa;
+			tr[gf].col = 1;
+			tr[f].col = 0;
+			rotate(gf, !d);
+			// 子树根为黑色，结束
+			break;
+		}
+		else{
+			tr[bro].col = tr[f].col = 0;
+			tr[gf].col = 1;
+			o = gf;
+			// 子树根为红色，向上递归
+		}
+	}
+	// 根为红色则染成黑色
+	tr[rt].col = 0; 
+}
+inline void ins(int v){
+	int o = rt;
+	int f = 0;
+	while(o && tr[o].v != v){
+		++ tr[o].sz; // !
+		f = o;
+		o = ch(o, v > tr[o].v);
+	}
+	if(o && tr[o].v == v){
+		++ tr[o].cnt;
+		++ tr[o].sz;
+		return ;
+	}
+	o = newnode(v);
+	tr[o].fa = f;
+	if(!f) rt = o;
+	else ch(f, v > tr[f].v) = o;
+	ins_fix(o);
+	return ;
+}
+inline void del_fix(int o){
+	while(o != rt && !tr[o].col){
+		int f = tr[o].fa;
+		int d = get(o);
+		int bro = ch(f, !d);
+		if(!tr[ch(bro, 0)].col && !tr[ch(bro, 1)].col){ // 兄弟节点的儿子全为黑色节点(空节点)
+			if(tr[bro].col){// 兄弟为红色
+				tr[bro].col = 0;
+				tr[f].col = 1;
+				rotate(f, d);
+				// 旋转后原来子树已平衡，递归o的父亲的子树
+			}
+			else{
+				tr[bro].col = 1;
+				// 把兄弟染成红色后，子树平衡但黑高度少1，需向上递归
+				o = f;
+			}
+		}
+		else{// 兄弟节点至少有一个红色儿子
+			if(!tr[ch(bro, !d)].col){ // 将红色儿子调整到与其父亲同一个方向
+				tr[bro].col = 1;
+				tr[ch(bro, d)].col = 0;
+				rotate(bro, !d);
+				bro = ch(f, !d);
+			}
+			tr[bro].col = tr[f].col;
+			tr[f].col = tr[ch(bro, !d)].col = 0;
+			rotate(f, d);
+			// 此时子树黑高度不变，结束递归
+			break;
+		}
+	}
+	// 因为当前节点的子树黑高度少1，若子树根为红色，只需把根变黑即完成调整
+	tr[o].col = 0;
+}
+inline void del(int v){
+	// 1. 当前节点没有儿子，直接删除
+	// 2. 以当前节点的后继代替当前节点， 并删除后继节点
+	// 若被删除点为黑色，需调整黑高度
+	int o = rt;
+	while(o && tr[o].v != v){
+		o = ch(o, v > tr[o].v);
+	}
+	if(!o) return ;
+	if(tr[o].cnt > 1) {
+		-- tr[o].cnt;
+		update(o);
+		return ;
+	}
+	int o1 = o;// 后继节点
+	if(ch(o, 0) && ch(o, 1)){
+		o1 = ch(o, 1);
+		while(ch(o1, 0)) o1 = ch(o1, 0);
+	}
+	tr[o].cnt = tr[o1].cnt;
+	tr[o].v = tr[o1].v;
+	int o2 = ch(o1, !ch(o1, 0));
+	int f = tr[o1].fa;
+	update(f);
+	tr[o2].fa = f;
+	if(f) ch(f, get(o1)) = o2;
+	else rt = o2;
+	for(int i = f; i && i != o && tr[o1].cnt > 1 ; i = tr[i].fa){
+		tr[i].sz -= tr[o1].cnt;
+		tr[i].sz ++; // 把update减去的加回来
+	}
+	if(!tr[o1].col) del_fix(o2);
+	stk[++top] = o1;// 回收节点
+}
+int kth(int k){
+	int o = rt;
+	if(k > tr[o].sz) return -1;
+	while(o){
+		int tmp = tr[ch(o, 0)].sz;
+		if(tmp < k && k <= tmp + tr[o].cnt){
+			return tr[o].v;
+		}
+		if(k <= tmp) o = ch(o, 0);
+		else{
+			k -= tmp + tr[o].cnt;
+			o = ch(o, 1);
+		}
+	}
+	return tr[o].v;
+}
+int rk(int v){
+	ins(v);
+	int o = rt;
+	int rank = 0;
+	while(o){
+		if(tr[o].v == v){
+			rank += tr[ch(o, 0)].sz;
+			break;
+		}
+		if(v < tr[o].v) o = ch(o, 0);
+		else{
+			rank += tr[ch(o, 0)].sz + tr[o].cnt;
+			o = ch(o, 1);
+		}
+	}
+	del(v);
+	return rank + 1;
+}
+
+// void dfs(int o){
+	// if(!o) return ;
+	// cout << o << " " << tr[o].col << " " << tr[o].v << "\n";
+	// cout << ch(o, 0) << " " << ch(o, 1) << "\n";
+	// dfs(ch(o, 0));
+	// dfs(ch(o, 1));
+// }
+tr[0] = (node){0, 0, 0, 0, 0, 0, 0};
